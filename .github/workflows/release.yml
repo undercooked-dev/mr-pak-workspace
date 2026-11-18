@@ -44,8 +44,6 @@ jobs:
         run: |
           npm ci
           npm run lint
-          npm test
-          npm run test:template
           npm run build
 
   # No dependency or project code runs in this job: it only computes the

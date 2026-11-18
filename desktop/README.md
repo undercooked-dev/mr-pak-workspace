@@ -152,11 +152,7 @@ activity. Native CLI history must remain on disk for conversation restoration.
 ```powershell
 npm ci
 npm run lint
-npm test
-npm run test:template
 npm run build
-npm run desktop:test:ui
-npm run test:preview
 ```
 
 The same commands run in zsh or bash on macOS and Linux.

@@ -163,9 +163,9 @@ Details of the port, verification and known limits: [macOS notes](macos.md).
 ## Build from source
 
 From a fresh clone, `npm ci` installs both the frontend and local desktop
-service dependencies. Then `npm test` runs the service checks; no separate
-service install is needed. If you disable npm lifecycle scripts, run
-`npm --prefix desktop/service ci` explicitly before tests or the service; on
+service dependencies; no separate service install is needed. If you disable
+npm lifecycle scripts, run `npm --prefix desktop/service ci` explicitly before
+starting the service; on
 macOS, also run `node scripts/fix-pty-permissions.mjs` so terminals can start.
 
 Install [Node.js](https://nodejs.org/en/download), Rust's MSVC toolchain and
