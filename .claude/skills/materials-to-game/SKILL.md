@@ -9,9 +9,9 @@ Identify the requested operation: generate material maps, retexture an existing
 mesh, or optimize a textured high-poly for a game. These are different tasks.
 Keep supplied geometry when only a material change was requested.
 
-Use built-in imagegen by default for requested raster texture artwork or
-base-color concepts. Another image API, including AtlasCloud/Nano Banana,
-requires the user's explicit choice; do not switch automatically after a failure.
+Requested raster texture artwork or base-color concepts follow `image-edit`:
+Codex built-in image generation first, AtlasCloud only once Codex credits are
+exhausted. A failed result is not exhaustion.
 A texture-looking image is not a validated PBR-map set, and built-in raster
 generation does not establish mesh-retexturing or geometry capabilities.
 

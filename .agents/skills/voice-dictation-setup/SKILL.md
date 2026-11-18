@@ -5,6 +5,12 @@ description: Help configure optional local Whisper dictation into terminals and 
 
 # Voice dictation setup
 
+This skill ships in the shared Mr. Mak repository. Links written as `../../../` and
+paths such as `scripts/`, `knowledge/`, `processes/` and `docs/` refer to that
+repository's root, not to the project you are working in. When the skill is
+installed for the whole machine it is a link: resolve this file's real path, or
+read `source` in `~/.claude/mr-pak-global.json`, to find that root.
+
 Read [the setup note](../../../knowledge/voice-dictation.md) and the chosen
 tool's current upstream instructions. Dictation is independent of Mr. Mak's
 conversational voice assistant. Keep the two workflows distinct.

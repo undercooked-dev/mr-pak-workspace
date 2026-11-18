@@ -46,3 +46,6 @@ read the sample cards.
 `knowledge/`: lessons.
 `context/`: the owner's optional preferences and goals.
 `inbox/`: incoming references.
+`agents/`, `global/`: agent definitions and the work-routing table installed for
+every project on the machine. See [one shared Mr. Mak](docs/global-setup.md);
+run `npm run global:install` after changing them.

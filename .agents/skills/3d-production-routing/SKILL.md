@@ -9,17 +9,20 @@ Start with the intended deliverable: image reference, editable geometry,
 textured mesh, material maps, rigged character or engine-ready animation.
 Inspect the supplied assets and the target engine before selecting a route.
 
-Use built-in imagegen by default for raster image generation and editing,
-including concepts, reference sheets, isolated parts, UI art and VFX textures.
-Preserve an explicit user choice of another image provider. Do not automatically
-fall back to Nano Banana, AtlasCloud or another image API if built-in generation
-is unavailable or misses a requirement; report the limitation for a route choice.
+Raster image generation and editing, including concepts, reference sheets,
+isolated parts, UI art and VFX textures, follows `image-edit`: Codex built-in
+image generation first, AtlasCloud only once Codex credits are exhausted. A
+failed or weak result is not exhaustion; retry or report it. Preserve an
+explicit user choice of another image provider.
 
 | Need | Skill |
 | --- | --- |
 | Explore silhouettes or edit an accepted image | `image-reference-workflow` |
 | Front sheet, parts and modeling references | `character-sheet-pipeline` |
-| Generate video, audio or supported meshes through AtlasCloud; images only when explicitly chosen | `atlascloud-generation` |
+| Generate or edit a raster image | `image-edit` |
+| Generate or edit video | `video-edit` |
+| Generate audio, or run the AtlasCloud side of an image or video job | `atlascloud-generation` |
+| Get a mesh or its textures made by the user in Tripo Studio | `tripo-handoff` |
 | Editable procedural geometry in Three.js | `img2threejs` |
 | Validate and deliver a PBR material | `materials-to-game` |
 | Analyze motion timing | `motion-reference-workflow` or `video-watch` |

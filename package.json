@@ -23,6 +23,10 @@
     "test:template": "node scripts/check-template.mjs && node scripts/sync-skills.mjs --check && npm run test:assets",
     "test:assets": "node --test scripts/asset-delivery/test/*.test.mjs",
     "skills:sync": "node scripts/sync-skills.mjs",
+    "global:install": "node scripts/install-global.mjs",
+    "global:check": "node scripts/install-global.mjs --check",
+    "workspace": "node scripts/workspace.mjs",
+    "test:global": "node --test .agents/skills/image-edit/scripts/codex_image.test.mjs scripts/test/workspace.test.mjs",
     "skills:pack": "node scripts/run-python.mjs scripts/package_skills.py"
   },
   "dependencies": {

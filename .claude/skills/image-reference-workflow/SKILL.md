@@ -10,12 +10,11 @@ dimensions; editing preserves an accepted asset and changes a named feature.
 Inspect supplied images before choosing the operation. Respect the requested
 provider, model, output count, aspect ratio and intended use.
 
-Use built-in imagegen by default for raster generation and editing. Preserve an
-explicit user choice of another image provider; use the bundled
-[AtlasCloud skill](../atlascloud-generation/SKILL.md) only for explicitly chosen
-AtlasCloud image jobs. Do not automatically switch to Nano Banana or another
-image API when built-in generation fails or is unavailable. Report the limitation
-and let the user choose an alternative. Do not infer a hidden model name or price.
+Follow `image-edit` for the provider: Codex built-in image generation first, and
+the bundled [AtlasCloud skill](../atlascloud-generation/SKILL.md) only once Codex
+credits are exhausted or when the user chooses AtlasCloud for the task. A failed
+or weak result is not exhaustion; retry or report it. Preserve an explicit user
+choice of another image provider. Do not infer a hidden model name or price.
 
 For concepts, vary silhouette, construction, proportions or palette deliberately.
 Label candidates with stable names and keep each prompt. For an edit, identify

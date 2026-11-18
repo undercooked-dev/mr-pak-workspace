@@ -5,8 +5,14 @@ description: Inspect a local or publicly accessible video through sampled scene 
 
 # Video Watch
 
-Read [the workflow](../../../knowledge/video-watch.md). Use the project helper
-at `scripts/video-watch/extract.py` with a local file or supported video URL and
+This skill ships in the shared Mr. Mak repository. Links written as `../../../` and
+paths such as `scripts/`, `knowledge/`, `processes/` and `docs/` refer to that
+repository's root, not to the project you are working in. When the skill is
+installed for the whole machine it is a link: resolve this file's real path, or
+read `source` in `~/.claude/mr-pak-global.json`, to find that root.
+
+Read [the workflow](../../../knowledge/video-watch.md). Use the helper
+at `scripts/video-watch/extract.py` in that repository with a local file or supported video URL and
 a new dated Workspace folder. Install its optional dependencies in a local
 virtual environment, not the system Python environment.
 

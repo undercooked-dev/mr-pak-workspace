@@ -36,15 +36,15 @@ an approval the user has given. Optional views and videos are separate scope.
    and review verdicts. Label which source is approved and which outputs still
    need a decision. Keep texture, rigging and mesh generation as later tasks.
 
-Use built-in imagegen by default for sheets, isolated parts and side/back views.
-Preserve the user's explicit image-provider choice. Retries stay on that route
-within the authorized scope; never automatically switch to Nano Banana,
-AtlasCloud or another image API. If built-in generation is unavailable or cannot
-meet the requirement, report the gap for the user to choose the next route.
+Sheets, isolated parts and side/back views follow `image-edit`: Codex built-in
+image generation first, AtlasCloud only once Codex credits are exhausted.
+Preserve the user's explicit image-provider choice. A failed or weak result is
+not exhaustion: retries stay on the same route within the authorized scope, and
+a requirement the route cannot meet is reported for the user to decide.
 Prompt resolution/aspect targets are requests; verify the actual output and do
 not invent a hidden model name, price or unsupported setting. The included
-[AtlasCloud module](../atlascloud-generation/SKILL.md) remains available for
-explicitly chosen image jobs and requested video turntables.
+[AtlasCloud module](../atlascloud-generation/SKILL.md) covers that fallback and
+requested video turntables.
 
 Example: a robot with three feet and one telescope. Extract the body, telescope
 and foot set from the approved front reference. Acceptance means matching shape,

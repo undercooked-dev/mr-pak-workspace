@@ -5,7 +5,13 @@ description: Create or maintain Workspace cards, report tabs and Markdown delive
 
 # Workspace authoring
 
-Read `AGENTS.md` and [the workflow](../../../processes/workspace-authoring.md).
+This skill ships in the shared Mr. Mak repository. Links written as `../../../` and
+paths such as `scripts/`, `knowledge/`, `processes/` and `docs/` refer to that
+repository's root, not to the project you are working in. When the skill is
+installed for the whole machine it is a link: resolve this file's real path, or
+read `source` in `~/.claude/mr-pak-global.json`, to find that root.
+
+Read the workspace's own `AGENTS.md` and [the workflow](../../../processes/workspace-authoring.md).
 Keep authored content in English unless the user explicitly requests another
 language. Put related iterations in an existing card rather than creating
 several cards for one task. Do not reorganize unrelated projects.

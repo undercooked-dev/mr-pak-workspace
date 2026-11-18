@@ -14,9 +14,9 @@ Use the approved character identity. Before a new video, verify its first-frame
 pose instead of relying on a model to invent the correct start. Keep framing
 stable enough to read the relevant limbs and contacts.
 
-Use built-in imagegen by default when a new still opening/reference frame needs
-generation or editing. Another image API requires the user's explicit choice;
-do not automatically switch after a failed or unavailable built-in generation.
+When a new still opening/reference frame needs generation or editing, follow
+`image-edit`: Codex built-in image generation first, AtlasCloud only once Codex
+credits are exhausted.
 For video, choose the provider/model from the user's selection or current
 discovery. Use the [AtlasCloud](../atlascloud-generation/SKILL.md) module for
 video execution and recovery.
