@@ -14,9 +14,12 @@ Use the approved character identity. Before a new video, verify its first-frame
 pose instead of relying on a model to invent the correct start. Keep framing
 stable enough to read the relevant limbs and contacts.
 
-Choose the provider/model from the user's selection or current discovery. Use
-the [fal](../fal-ai-generation/SKILL.md) or
-[Higgsfield](../higgsfield-workflow/SKILL.md) module for execution and recovery.
+Use built-in imagegen by default when a new still opening/reference frame needs
+generation or editing. Another image API requires the user's explicit choice;
+do not automatically switch after a failed or unavailable built-in generation.
+For video, choose the provider/model from the user's selection or current
+discovery. Use the [AtlasCloud](../atlascloud-generation/SKILL.md) module for
+video execution and recovery.
 The number of candidates comes from the task; do not impose a costly fixed batch.
 
 Review support changes, strike readability, foot contact, impossible joints,

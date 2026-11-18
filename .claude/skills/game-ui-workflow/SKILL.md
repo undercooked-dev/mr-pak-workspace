@@ -9,6 +9,11 @@ Inspect the current game camera, input rules, UI framework and representative
 screens. Reuse the project's selected visual language and framework. Establish
 the information and actions the player needs before generating decorative art.
 
+For requested raster icons, portraits, panels or concept images, use built-in
+imagegen by default. Keep suitable existing vector/code/native assets in their
+editable format. Use another image API only when the user explicitly chooses
+it; a failed or unavailable built-in tool does not authorize a paid fallback.
+
 ## Design against real gameplay
 
 Use a native game capture as the context for a proposal. Keep it intact when

@@ -53,15 +53,14 @@ test('direct card actions and date lookups bypass the model and never open worke
   } finally { await service.close(); }
 });
 
-test('reasoning is medium or above, research uses xhigh, and max needs an explicit request', () => {
-  assert.equal(taskEffort('Fix a typo'), 'medium');
-  assert.equal(taskEffort('Implement the project integration'), 'high');
+test('workers use xhigh reasoning and max needs an explicit request', () => {
+  assert.equal(taskEffort('Fix a typo'), 'xhigh');
+  assert.equal(taskEffort('Implement the project integration'), 'xhigh');
   assert.equal(taskEffort('Сделай research карточку'), 'xhigh');
-  assert.equal(taskEffort('Research animation', 'max'), 'xhigh');
-  assert.equal(taskEffort('Use max effort for the research', 'medium'), 'max');
-  assert.equal(taskEffort('Do not use max effort', 'max'), 'xhigh');
-  assert.equal(taskEffort('Не используй max effort', 'max'), 'xhigh');
-  assert.equal(taskEffort('Implement a 3ds Max export'), 'high');
+  assert.equal(taskEffort('Use max effort for the research'), 'max');
+  assert.equal(taskEffort('Do not use max effort'), 'xhigh');
+  assert.equal(taskEffort('Не используй max effort'), 'xhigh');
+  assert.equal(taskEffort('Implement a 3ds Max export'), 'xhigh');
   assert.equal(taskEffort('Use maximum effort for the research'), 'max');
   assert.equal(requestDate('31.02.2026'), null);
   assert.equal(requestDate('Что делали вчера?', new Date(2026, 8, 12)), '2026-09-11');
@@ -70,7 +69,7 @@ test('reasoning is medium or above, research uses xhigh, and max needs an explic
   for (const agent of ['codex', 'claude']) {
     if (!inventory().find(item => item.id === agent)?.available) continue;
     const command = terminalCommand(agent, { effort: 'xhigh', bypass: false });
-    const script = process.platform === 'win32' ? Buffer.from(command.args.at(-1), 'base64').toString('utf16le') : command.args.join(' ');
+    const script = command.args.includes('-EncodedCommand') ? Buffer.from(command.args.at(-1), 'base64').toString('utf16le') : command.args.join(' ');
     assert.match(script, agent === 'codex' ? /model_reasoning_effort="xhigh"/ : /--effort[' ]+xhigh/);
   }
 });

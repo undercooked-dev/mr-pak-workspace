@@ -3,8 +3,8 @@
   if (window.__makReportViewer) return;
   window.__makReportViewer = true;
   const ready = () => {
-    const images = () => [...document.querySelectorAll('img')].filter(image => !image.closest('.mak-lightbox'));
-    let dialog, stage, display, caption, counter, download, original, note, zoom, current = 0, restoreFocus;
+    const images = anchor => [...(anchor?.closest('[data-mak-gallery]') || document).querySelectorAll('img')].filter(image => !image.closest('.mak-lightbox'));
+    let dialog, stage, display, caption, counter, download, original, note, zoom, current = 0, restoreFocus, activeImage;
     const button = (label, action) => { const node = document.createElement('button'); node.type = 'button'; node.textContent = label; node.addEventListener('click', action); return node; };
     const show = image => {
       if (!dialog) {
@@ -25,7 +25,8 @@
         dialog.addEventListener('keydown', event => { if (event.key === 'ArrowRight') { event.preventDefault(); change(1); } if (event.key === 'ArrowLeft') { event.preventDefault(); change(-1); } });
         dialog.addEventListener('click', event => { if (event.target === stage) dialog.close(); });
       }
-      const collection = images(); current = collection.indexOf(image);
+      activeImage = image;
+      const collection = images(image); current = collection.indexOf(image);
       const url = image.currentSrc || image.src;
       let filename = 'image'; try { filename = decodeURIComponent(new URL(url, location.href).pathname.split('/').pop()) || filename; } catch { /* Data URLs use the fallback. */ }
       caption.textContent = image.alt || filename; counter.textContent = `${current + 1} / ${collection.length}`;
@@ -34,7 +35,7 @@
       stage.classList.remove('actual'); zoom.textContent = '100%'; note.textContent = 'Arrow keys to browse · Esc to close';
       if (!dialog.open) { restoreFocus = image; dialog.showModal(); }
     };
-    const change = delta => { const all = images(); if (all.length) show(all[(current + delta + all.length) % all.length]); };
+    const change = delta => { const all = images(activeImage); if (all.length) show(all[(current + delta + all.length) % all.length]); };
     const prepare = root => { for (const image of root.querySelectorAll('img:not([data-mak-zoom])')) { if (image.closest('.mak-lightbox')) continue; image.dataset.makZoom = 'true'; if (!image.hasAttribute('tabindex')) image.tabIndex = 0; if (!image.title) image.title = 'Open image · download available in preview'; } };
     prepare(document);
     new MutationObserver(records => { if (records.some(record => [...record.addedNodes].some(node => node.nodeType === 1 && !node.closest?.('.mak-lightbox')))) prepare(document); }).observe(document.body, { childList: true, subtree: true });

@@ -9,6 +9,14 @@
    [the editable card format](../docs/editable-cards.md). Store content in a
    `.card.json` file and register `viewer: "card"`. Preserve stable entry IDs and
    validate before saving. Keep custom HTML when a task needs its own layout.
+   For a large card, set `stepGroups` to an ordered list of navigation folder
+   labels and give each step a matching `group`. Folders organize the top bar;
+   keep the steps in their existing order and preserve paths so saved links
+   still open the same section. Cards without groups retain their flat tabs.
+   To consolidate a folder further, set `stepTabs[folderLabel]` to its ordered
+   tab labels and add a matching `tab` to each step in that folder. The top bar
+   shows those tabs, with the original reports in a searchable section sidebar.
+   Narrow readers use a section selector.
 4. Add the shared report CSS and script; use `data-mak-report="document"`.
    Markdown requires no HTML wrapper and opens in the formatted document view.
 5. Make every image clickable and downloadable. Videos need native controls.

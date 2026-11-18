@@ -9,12 +9,17 @@ Start with the intended deliverable: image reference, editable geometry,
 textured mesh, material maps, rigged character or engine-ready animation.
 Inspect the supplied assets and the target engine before selecting a route.
 
+Use built-in imagegen by default for raster image generation and editing,
+including concepts, reference sheets, isolated parts, UI art and VFX textures.
+Preserve an explicit user choice of another image provider. Do not automatically
+fall back to Nano Banana, AtlasCloud or another image API if built-in generation
+is unavailable or misses a requirement; report the limitation for a route choice.
+
 | Need | Skill |
 | --- | --- |
 | Explore silhouettes or edit an accepted image | `image-reference-workflow` |
 | Front sheet, parts and modeling references | `character-sheet-pipeline` |
-| Generate images, meshes, material maps or video through fal.ai | `fal-ai-generation` |
-| Work through an existing Higgsfield account | `higgsfield-workflow` |
+| Generate video, audio or supported meshes through AtlasCloud; images only when explicitly chosen | `atlascloud-generation` |
 | Editable procedural geometry in Three.js | `img2threejs` |
 | Validate and deliver a PBR material | `materials-to-game` |
 | Analyze motion timing | `motion-reference-workflow` or `video-watch` |

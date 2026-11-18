@@ -15,8 +15,11 @@ event timing, cleanup and rendering cost.
 Separate a reference board, proposed motion and implemented effects. Preserve
 the user's selected direction and revisions. For a vendor preview, record its
 source and what should be borrowed; viewing it does not supply an asset licence.
-Use the project's approved provider when new concept art is requested. Do not
-generate another batch just to turn a chosen direction into a handoff.
+Use built-in imagegen by default for requested raster concepts or effect textures;
+retain editable native/vector assets where appropriate. Another image API needs
+the user's explicit choice, including after a failed or unavailable built-in
+generation. Do not generate another batch just to turn a chosen direction into
+a handoff. Raster textures do not establish native effect timing or behavior.
 
 Describe the effect in layers: purpose, shape, colour, attachment, timing and
 intensity. Distinguish a continuous state from a one-shot event. A small contact

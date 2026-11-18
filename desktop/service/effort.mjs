@@ -11,11 +11,6 @@ export function explicitMax(text = '') {
   return false;
 }
 
-export function taskEffort(request = '', preferred) {
-  if (explicitMax(request)) return 'max';
-  if (preferred === 'max') return 'xhigh';
-  if (['medium', 'high', 'xhigh'].includes(preferred)) return preferred;
-  if (/research|исследова|рес[её]рч|ресерч|глубок(?:ий|ое)|архитектур|сложн/iu.test(request)) return 'xhigh';
-  if (/implement|реализ|разработ|интеграц|debug|отлад|рефактор/iu.test(request)) return 'high';
-  return 'medium';
+export function taskEffort(request = '') {
+  return explicitMax(request) ? 'max' : defaultWorkerEffort;
 }

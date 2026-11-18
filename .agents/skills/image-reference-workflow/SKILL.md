@@ -10,8 +10,12 @@ dimensions; editing preserves an accepted asset and changes a named feature.
 Inspect supplied images before choosing the operation. Respect the requested
 provider, model, output count, aspect ratio and intended use.
 
-For fal.ai execution, use the bundled [fal skill](../fal-ai-generation/SKILL.md).
-Another provider can be used when requested; inspect its live model schema.
+Use built-in imagegen by default for raster generation and editing. Preserve an
+explicit user choice of another image provider; use the bundled
+[AtlasCloud skill](../atlascloud-generation/SKILL.md) only for explicitly chosen
+AtlasCloud image jobs. Do not automatically switch to Nano Banana or another
+image API when built-in generation fails or is unavailable. Report the limitation
+and let the user choose an alternative. Do not infer a hidden model name or price.
 
 For concepts, vary silhouette, construction, proportions or palette deliberately.
 Label candidates with stable names and keep each prompt. For an edit, identify
@@ -24,8 +28,9 @@ a modeling sheet needs readable parts and neutral light. Do not force the same
 camera on every task. When extraction is requested, use the character-sheet
 module rather than treating a cinematic illustration as a complete parts pack.
 
-Keep prompt, endpoint, seed when available, request ID and downloaded outputs
-together. Review identity, framing, missing parts, unintended additions and the
+Keep the prompt, exposed provider/model details, available request ID/seed and
+local outputs together; record unavailable metadata honestly. Review identity,
+framing, missing parts, unintended additions and the
 requested change. Compare at full size. Keep rejected takes with a short reason,
 and preserve the chosen take while making revisions. Present images with direct
 file access and a useful preview, using the recipient's existing report style.

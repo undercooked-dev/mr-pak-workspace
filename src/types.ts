@@ -1,6 +1,10 @@
 export interface WorkspaceStep {
   name: string
   path: string
+  /** Navigation folder label; does not change the file path or step index. */
+  group?: string
+  /** Optional tab within a navigation folder; its reports appear in a sidebar. */
+  tab?: string
   /**
    * Omitted = HTML in an iframe, formatted Markdown, or an image preview,
    * selected by file extension. `compare3d` = a Compare3DManifest JSON and
@@ -22,6 +26,10 @@ export interface WorkspaceEntity {
   updated?: string
   folder: string
   steps: WorkspaceStep[]
+  /** Preferred order for navigation folders; used when steps have a group. */
+  stepGroups?: string[]
+  /** Preferred tab order within each folder that uses sidebar navigation. */
+  stepTabs?: Record<string, string[]>
   /** Tab to open for a card link without an explicit step; otherwise use latest. */
   defaultStep?: number
   status: 'active' | 'done' | 'archived'

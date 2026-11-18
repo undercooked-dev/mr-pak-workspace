@@ -123,6 +123,18 @@ try {
     await page.locator(`[data-chat-tab="${agent}"] [role="tab"]`).click();
     const screen = page.locator('.terminal-area .xterm-screen'); await screen.waitFor();
     await page.locator('.xterm-rows').filter({ hasText: 'Fixture line' }).waitFor();
+    // Exercise real browser keydown/keypress/keyup events through xterm and the
+    // service. Shift+Enter must emit one modified key, never an extra submit.
+    const received = writes.get(agent), start = received.length;
+    await page.locator('.xterm-helper-textarea').focus();
+    await page.keyboard.press('Shift+Enter');
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('x');
+    await page.keyboard.press('Enter');
+    for (let i = 0; i < 50 && received.length < start + 4; i++) await new Promise(resolve => setTimeout(resolve, 20));
+    const newline = process.platform === 'win32' && agent === 'codex' ? '\x1b[13;28;13;1;16;1_\x1b[13;28;13;0;16;1_' : '\x1b[13;2u';
+    const escape = process.platform === 'win32' && agent === 'codex' ? '\x1b[27;1;27;1;0;1_\x1b[27;1;27;0;0;1_' : '\x1b';
+    assert.deepEqual(received.slice(start), [agent === 'shell' ? '\r' : newline, escape, 'x', '\r'], `${agent}: Shift+Enter, Esc, typing and Enter reach the PTY exactly once; shell keys stay native`);
     if (agent !== 'shell') {
       await screen.hover(); const before = await page.locator('.xterm-rows').innerText(); await page.mouse.wheel(0, -420);
       await page.waitForFunction(previous => (document.querySelector('.xterm-rows'))?.innerText !== previous, before);
@@ -149,7 +161,7 @@ try {
     }
   }
   assert.deepEqual(errors, []);
-  console.log('UI passed: 12 clickable wrapping tabs; Markdown preview/edit/save/conflict/draft; local Skills; MCP filtering, checks and hidden credentials; terminal bottom row visible across four window/font sizes; Codex/Claude/OpenCode/Kimi copy and scroll; PowerShell interrupt.');
+  console.log('UI passed: 12 clickable wrapping tabs; Markdown preview/edit/save/conflict/draft; local Skills; MCP filtering, checks and hidden credentials; terminal bottom row visible across four window/font sizes; Codex/Claude/OpenCode/Kimi Shift+Enter, Enter, copy and scroll; PowerShell native keys and interrupt.');
 } finally {
   await browser?.close();
   for (const session of service.sessions.items.values()) session.process = null;

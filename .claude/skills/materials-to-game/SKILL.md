@@ -9,10 +9,18 @@ Identify the requested operation: generate material maps, retexture an existing
 mesh, or optimize a textured high-poly for a game. These are different tasks.
 Keep supplied geometry when only a material change was requested.
 
-For fal material generation, discover the current Patina/material endpoint and
-read its schema using the [fal module](../fal-ai-generation/SKILL.md). The chosen
-material should be evaluated on the intended surface, not only as a preview tile.
-For mesh retexturing, inspect the chosen service's geometry/UV inputs separately.
+Use built-in imagegen by default for requested raster texture artwork or
+base-color concepts. Another image API, including AtlasCloud/Nano Banana,
+requires the user's explicit choice; do not switch automatically after a failure.
+A texture-looking image is not a validated PBR-map set, and built-in raster
+generation does not establish mesh-retexturing or geometry capabilities.
+
+For separate PBR channels, use the project's authoring/baking tools or a service
+the user selects. With [AtlasCloud](../atlascloud-generation/SKILL.md), inspect
+the live schema and confirm the actual channel outputs before proposing that
+route. For mesh retexturing, inspect geometry/UV inputs separately. Explain any
+capability gap instead of substituting a preview image. Evaluate materials on
+the intended surface, not only as a preview tile.
 
 For a high-to-low workflow:
 

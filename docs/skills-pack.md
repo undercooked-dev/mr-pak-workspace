@@ -1,6 +1,6 @@
 # Mr. Mak agent skills
 
-This pack contains 20 project-local workflows for Codex CLI and Claude Code.
+This pack contains 19 project-local workflows for Codex CLI and Claude Code.
 You can use them in a game or creative project without installing Mr. Mak's
 desktop app. Sign in to at least one of those CLIs first.
 
@@ -8,6 +8,11 @@ Read `docs/skills.md` for the complete index. The six new game workflows cover
 VFX, UI, animation integration, levels, audio and native visual review. Existing
 skills cover planning, handoffs, image/3D production, Blender animation, video
 inspection, Workspace reports and local dictation setup.
+
+Raster generation and editing default to built-in imagegen when the host provides
+it. Another image API requires an explicit user choice; missing tool access does
+not trigger an automatic paid fallback. AtlasCloud remains the supported route
+for video, audio and selected 3D capabilities, with opt-in image operations.
 
 ## Add selected skills to a project
 

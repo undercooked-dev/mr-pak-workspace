@@ -1,9 +1,15 @@
 # Project skills
 
-Twenty skills live in this project. `.agents/skills` is the maintained source
+Nineteen skills live in this project. `.agents/skills` is the maintained source
 for Codex; `.claude/skills` contains complete, identical copies for Claude Code,
 including scripts and references. Both Skills sections open the full instructions.
 These are local project files, not global installations.
+
+Raster image generation and editing default to the host's built-in imagegen.
+AtlasCloud remains available for video, audio and supported 3D, and for images
+only when the user explicitly chooses it. No automatic paid-image fallback is
+authorized. Built-in tool availability and exposed account usage vary by host;
+the skill pack neither bundles that tool nor establishes that generation is free.
 
 Claude reads the instructions in its own `SKILL.md` when a skill is used; a
 Markdown link is just a request to read another file, not automatic inheritance.
@@ -19,7 +25,7 @@ maintained source. `npm run test:template` checks that the two copies agree.
 | [3d-production-routing](../.agents/skills/3d-production-routing/SKILL.md) | Choose a practical workflow for 3D concepts, generated meshes, material maps, procedural Three.js reconstruction and game animation. |
 | [blender-game-animation](../.agents/skills/blender-game-animation/SKILL.md) | Rig and animate supplied characters in Blender, revise motion from references, and deliver editable sources plus a verified game export. |
 | [character-sheet-pipeline](../.agents/skills/character-sheet-pipeline/SKILL.md) | Prepare strict-front character sheets, isolated parts and optional multiview references for 3D modeling from an approved image. |
-| [fal-ai-generation](../.agents/skills/fal-ai-generation/SKILL.md) | Generate and edit images, create video, audio, 3D assets or material maps through fal.ai MCP or the Python queue client. Use for fal model discovery, reference uploads, generation, recovery and local delivery. |
+| [atlascloud-generation](../.agents/skills/atlascloud-generation/SKILL.md) | Create video, audio or supported 3D assets through AtlasCloud, plus image jobs explicitly chosen by the user. Discover models and schemas, upload references, recover jobs and download results. |
 | [feature-handoff](../.agents/skills/feature-handoff/SKILL.md) | Prepare a precise handoff for an agent or developer implementing a feature, continuing a task or reviewing a finished change. |
 | [game-animation-integration](../.agents/skills/game-animation-integration/SKILL.md) | Bring approved animation into a game, including clip mapping, turn exits, locomotion phase and gameplay event timing. |
 | [game-audio-workflow](../.agents/skills/game-audio-workflow/SKILL.md) | Audition, select and integrate sounds with stable asset IDs, contact events, mixer rules and native listening checks. |
@@ -27,7 +33,6 @@ maintained source. `npm run test:template` checks that the two copies agree.
 | [game-ui-workflow](../.agents/skills/game-ui-workflow/SKILL.md) | Take a HUD or menu from a visual study to live game data, input behavior and native review. |
 | [game-vfx-workflow](../.agents/skills/game-vfx-workflow/SKILL.md) | Develop effect layers, event timing, attachment, cleanup and in-game visual comparisons. |
 | [gameplay-visual-review](../.agents/skills/gameplay-visual-review/SKILL.md) | Verify game changes with controlled native captures and separate implementation, visual review and acceptance. |
-| [higgsfield-workflow](../.agents/skills/higgsfield-workflow/SKILL.md) | Use the official Higgsfield CLI or its Blender integration to discover models, generate requested assets and resume recorded jobs. |
 | [image-reference-workflow](../.agents/skills/image-reference-workflow/SKILL.md) | Explore image concepts and make faithful edits of accepted references for 3D or creative production, with explicit model choices and visual review. |
 | [img2threejs](../.agents/skills/img2threejs/SKILL.md) | Turn an object or character reference image into a quality-gated, animation-ready procedural Three.js model built in code. Use for image-to-3D reconstruction, detail-accurate object rebuilds, stylized/likeness-maximized human characters, sculpt specs, and staged code generation. |
 | [materials-to-game](../.agents/skills/materials-to-game/SKILL.md) | Create or apply material maps and bake a textured high-poly mesh onto a game mesh, with channel, UV and export checks. |
@@ -64,7 +69,7 @@ the chosen modules and their dependencies into your project. Keep full skill
 folders, including scripts, references and licences. The ZIP includes complete
 Codex and Claude copies; no global installation or symlink is required.
 
-The eight original creative modules and six new game workflows can be copied
+The seven creative modules and six game workflows can be copied
 with their own local resources. Preserve any referenced sibling skill when you
 choose to use it. Keep the full img2threejs folder and its licences.
 

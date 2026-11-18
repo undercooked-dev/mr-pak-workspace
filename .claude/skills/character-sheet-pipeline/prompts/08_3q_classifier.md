@@ -1,6 +1,6 @@
 # Stage 4.5 · Vision-classifier verification — the anti-3/4 retry loop (V3)
 
-**Model:** Use the host agent's available image inspection or a configured vision API with verified image-input support. Record the model and method with the verdict. This file supplies the rubric, not a deployed classifier service.
+**Inspection route:** Use the host agent's available image inspection, or a vision API explicitly chosen for the task with verified image-input support. Record the method and model only when exposed. This file supplies the rubric, not a deployed classifier service or an API-key requirement.
 **Inputs:** the candidate image + the part category (`body-essential | paired | accessory | hair | sheet | multiview-side | multiview-back`)
 **Output:** JSON verdict — `pass | soft_fail | hard_fail` + reason string + per-axis flags.
 
@@ -95,11 +95,12 @@ Anti-drift reinforcement (mandatory): zero rotation in the horizontal plane. Cam
 ## Retry budget
 
 - **Initial attempt** uses the original stage prompt with normal anti-3/4 negatives.
-- **Retry 1** uses the escalated prompt above, same model (Nano Banana Pro for image stages).
-- **Retry 2** uses the escalated prompt + falls back to Nano Banana 2.
+- **Retry 1** uses the escalated prompt above on the same chosen image route (built-in imagegen by default).
+- **Retry 2**, if within the authorized task budget, refines the failed criterion on that same route. Never automatically switch to Nano Banana or another image API; an alternative requires explicit user choice.
 - **After retry 2** still `hard_fail` → stop. Show the user the three attempts plus the classifier reasons. Offer: (a) accept best attempt with warning, (b) provide custom instructions and retry once more, (c) skip this part.
 
-A `soft_fail` is accepted automatically but logged as `accepted_with_warning` in the manifest with the classifier reason recorded. The user can review the manifest after the run and ask for a regeneration of any `soft_fail` part.
+A `soft_fail` is recorded with its reason for review. A technical rubric verdict
+does not establish owner acceptance; preserve any owner-review gate in the task.
 
 ## Manifest entry per part
 
@@ -108,9 +109,9 @@ A `soft_fail` is accepted automatically but logged as `accepted_with_warning` in
   "part": "hat_front",
   "category": "accessory",
   "attempts": [
-    { "model": "nano-banana-pro", "verdict": "hard_fail", "reason": "rotated ~25° camera-right; 3/4 hero angle", "image_hash": "..." },
-    { "model": "nano-banana-pro", "verdict": "hard_fail", "reason": "still rotated ~15° camera-right", "image_hash": "..." },
-    { "model": "nano-banana-2", "verdict": "pass", "reason": "clean strict front", "image_hash": "..." }
+    { "provider": "built-in imagegen", "model": null, "verdict": "hard_fail", "reason": "rotated ~25° camera-right; 3/4 hero angle", "image_hash": "..." },
+    { "provider": "built-in imagegen", "model": null, "verdict": "hard_fail", "reason": "still rotated ~15° camera-right", "image_hash": "..." },
+    { "provider": "built-in imagegen", "model": null, "verdict": "pass", "reason": "clean strict front", "image_hash": "..." }
   ],
   "final_verdict": "pass",
   "retry_count": 2,
@@ -120,13 +121,19 @@ A `soft_fail` is accepted automatically but logged as `accepted_with_warning` in
 
 ## Cost note
 
-Each verification call is one vision request — small image input, ~200 token JSON output. Budget roughly 1¢–2¢ per check on GPT-4o-mini-vision tier, more on GPT-5 vision. For a typical 10-part run with one verification per part and a ~15% hard-fail rate, expect ~12 vision calls total: cheap compared to a single Nano Banana Pro regeneration.
+Host inspection does not imply a separate vision-API call. If a vision service
+is explicitly selected, check its current pricing and account usage before a
+batch. Record exposed usage; do not infer built-in generation is free or assign
+a hidden model, failure rate or fixed per-check cost.
 
 ## When to skip the classifier
 
 - The user explicitly says "skip verification, accept first attempt" — log it in the manifest, ship.
 - Stage 6 (360 videos) — verification is harder on video; do a visual sanity pass instead of automated classifier for now.
 
-## Why GPT-4/5 vision and not Claude vision
+## Inspection availability
 
-Both work. OpenAI vision was chosen as the default for this version because (a) the pipeline already integrates an OpenAI image call at Stage 2B, so an OPENAI_API_KEY is required regardless, and (b) the strict-rubric JSON output mode is well-trodden territory on GPT-4o / GPT-5. If you prefer Anthropic-only, replace the call with claude-opus-4-7 vision and keep the prompt identical — the rubric is portable.
+The rubric is portable across image-capable hosts. Use the available inspection
+tool and retain its observations. No particular vendor key is required by the
+reference workflow. If image inspection is unavailable, state that limitation
+instead of inventing a verdict or automatically starting a paid vision service.

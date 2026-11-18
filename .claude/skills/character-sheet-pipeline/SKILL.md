@@ -32,14 +32,19 @@ an approval the user has given. Optional views and videos are separate scope.
 6. If requested, add [side/back views](prompts/06_multiview.md) for selected parts.
    If requested and budgeted, add [turntables](prompts/07_360_video.md), with a
    locked camera and rotating subject. Do not create optional video by default.
-7. Deliver an inventory with prompt, provider/model, source hash, local files
+7. Deliver an inventory with prompt, provider/model when exposed, source hash, local files
    and review verdicts. Label which source is approved and which outputs still
    need a decision. Keep texture, rigging and mesh generation as later tasks.
 
-Nano Banana Pro front/part edits and GPT Image supplementary sheets are useful
-routes from the source workflow, not restrictions on a user's explicit choice.
-Verify current endpoint IDs and schemas via the selected provider. The included
-[fal module](../fal-ai-generation/SKILL.md) handles fal execution and job recovery.
+Use built-in imagegen by default for sheets, isolated parts and side/back views.
+Preserve the user's explicit image-provider choice. Retries stay on that route
+within the authorized scope; never automatically switch to Nano Banana,
+AtlasCloud or another image API. If built-in generation is unavailable or cannot
+meet the requirement, report the gap for the user to choose the next route.
+Prompt resolution/aspect targets are requests; verify the actual output and do
+not invent a hidden model name, price or unsupported setting. The included
+[AtlasCloud module](../atlascloud-generation/SKILL.md) remains available for
+explicitly chosen image jobs and requested video turntables.
 
 Example: a robot with three feet and one telescope. Extract the body, telescope
 and foot set from the approved front reference. Acceptance means matching shape,

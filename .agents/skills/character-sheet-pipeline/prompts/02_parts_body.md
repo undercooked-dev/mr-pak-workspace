@@ -1,6 +1,6 @@
 # Stage 4 · Body-essential parts — STRICT FRONT (torso / legs / arms / head)
 
-**Model:** Nano Banana Pro (same as Stage 2A — consistency wins)
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback. Keep the approved Stage 2A source attached.
 **Resolution:** 2K
 **Reference:** the Stage 2A strict-front A-pose sheet (always attach)
 **Rule:** the part must be in STRICT FRONT view, matching the A-pose orientation of the sheet exactly. No 3/4. No tilt. No rotation.

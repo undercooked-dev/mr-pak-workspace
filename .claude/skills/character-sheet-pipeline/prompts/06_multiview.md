@@ -1,6 +1,6 @@
 # Stage 5 · Multi-view per part — SIDE and BACK views (gate-controlled)
 
-**Model:** Nano Banana Pro (same as Stages 2A + 4 — consistency wins)
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback. Reuse the approved sources from Stages 2A and 4.
 **Resolution:** 2K
 **Reference:** the Stage 2A strict-front A-pose sheet + the matching part's strict-front extract from Stage 4 (attach both)
 **Rule:** these are STRICT ORTHOGRAPHIC side and back views. NO 3/4 here either. Side = exactly 90° rotated profile. Back = exactly 180° dead-back. The character / part must hold A-pose throughout.
@@ -22,7 +22,11 @@ Wait for explicit user response before continuing.
 
 ## Why gate this
 
-Multi-view doubles or triples the render count vs Stage 4. For a character with 9 parts at front + multi-view on 5 of them (body parts) at side + back = 9 front + 10 multi-view = 19 renders. Each costs credits. User needs to consent to that volume.
+Multi-view can double or triple the image count. For a character with 9 front
+parts plus side/back views for 5 parts, the total is 19 images. Keep that volume
+within the user's selected scope. Check the chosen tool's exposed usage or
+pricing; do not assume every tool charges credits or that built-in generation
+is free. Another image API still requires an explicit user choice.
 
 ## Per-part prompt templates
 

@@ -121,9 +121,9 @@ try {
   await page.getByRole('button', { name: 'Toggle skills', exact: true }).click();
   for (const provider of ['Claude', 'Codex']) {
     await page.locator('.skill-locations').getByRole('button', { name: provider, exact: true }).click();
-    await page.getByRole('treeitem', { name: /^fal-ai-generation$/ }).click();
+    await page.getByRole('treeitem', { name: /^atlascloud-generation$/ }).click();
     await page.getByRole('treeitem', { name: /^SKILL.md/ }).click();
-    await page.getByRole('heading', { name: 'fal.ai generation', exact: true }).waitFor();
+    await page.getByRole('heading', { name: 'AtlasCloud generation', exact: true }).waitFor();
     await page.getByRole('heading', { name: 'Run and retain the job', exact: true }).waitFor();
     const documentText = await page.locator('.mak-markdown').innerText();
     assert.ok(documentText.length > 3000);

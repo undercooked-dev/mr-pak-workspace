@@ -56,9 +56,10 @@ Connection credentials remain local or in the provider's own login store.
 Follow the selected client's documented environment-secret support rather than
 placing a token directly in a tracked connection file.
 
-For fal.ai, read the bundled `fal-ai-generation` skill, connect the MCP or use its
-Python helper, and set `FAL_KEY` in `.env`. Discover the exact model schema before
-starting a paid job. Higgsfield uses its own CLI setup and account.
+For AtlasCloud, read the bundled `atlascloud-generation` skill. Use an available
+MCP connection or its Python helper with `ATLASCLOUD_API_KEY` in the environment
+or a selected ignored env file (`--env .env.atlascloud` for this workspace).
+Inspect the exact model schema and pricing before starting a paid job.
 
 ## Design rules
 

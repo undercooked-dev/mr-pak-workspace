@@ -8,8 +8,9 @@ import { Icon } from './Icons'
 import type { AgentId } from './types'
 import { decorateTerminal, originalTheme, terminalTheme, terminalRoleColors, type TerminalAppearance } from './terminalAppearance'
 import { useWorkspaceTheme } from '../lib/workspace-theme'
-import { fileManager, isMac, modKey, modLabel } from './platform'
+import { fileManager, isMac, isWindows, modKey, modLabel } from './platform'
 import { deferredClipboardWrite, terminalClipboardGate, terminalCopyWindow, type PendingCopy } from './terminalClipboard'
+import { terminalInput, terminalNewline } from './terminalKeys'
 
 export default function TerminalPane({ id, agent, fontSize, appearance, optionMeta, onAttachmentStatus }: { id: string; agent: AgentId; fontSize: number; appearance: TerminalAppearance; optionMeta: boolean; onAttachmentStatus: (id: string, text: string) => void }) {
   const { resolved } = useWorkspaceTheme('chat')
@@ -166,9 +167,16 @@ export default function TerminalPane({ id, agent, fontSize, appearance, optionMe
       // Terminal protocol replies intentionally contain ASCII control characters.
       // eslint-disable-next-line no-control-regex
       const deviceReply = /^\x1b\[[?>0-9;]*[RcnIO]$/.test(data) || /^\x1b\][\s\S]*(?:\x07|\x1b\\)$/.test(data)
-      if (ready && !deviceReply) sendEvent({ type: 'input', id, data })
+      if (ready && !deviceReply) sendEvent({ type: 'input', id, data: terminalInput(data, agent, isWindows) })
     })
     terminal.attachCustomKeyEventHandler(event => {
+      // xterm encodes Shift+Enter as plain Enter. Preserve the modifier for
+      // agent prompt editors using the encoding their input API understands.
+      if (agent !== 'shell' && event.key === 'Enter' && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey && !event.isComposing && event.keyCode !== 229) {
+        event.preventDefault(); event.stopPropagation()
+        if (event.type === 'keydown') terminal.input(terminalNewline(agent, isWindows), true)
+        return false
+      }
       // Windows/Linux: agent chats use Ctrl+C exclusively for copy. Even an empty
       // selection must not send ETX to the CLI or terminate its wrapper process.
       // macOS: Cmd+C copies and Ctrl+C reaches the CLI, as in Terminal.app.

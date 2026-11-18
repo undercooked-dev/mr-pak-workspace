@@ -27,7 +27,7 @@ const coordinator = await new Coordinator({
       case 'workspace_activity': return { date: args.date, cards: [card], commits: ['Check animation export'], basis: 'Workspace dates and recorded Git changes.' };
       case 'update_workspace': assert.equal(args.entityId, card.id); Object.assign(card, args); return card;
       case 'open_chat': {
-        const chat = { id: `test-chat-${chats.length}`, name: taskTitle(args.name), agent: args.agent, effort: taskEffort(coordinator.operations.get(id).text, args.effort), open: true, status: 'starting' };
+        const chat = { id: `test-chat-${chats.length}`, name: taskTitle(args.name), agent: args.agent, effort: taskEffort(coordinator.operations.get(id).text), open: true, status: 'starting' };
         chats.push(chat); return chat;
       }
       case 'read_chat': return { ...chats.find(chat => chat.id === args.id), screen: 'Sign in required. This isolated test terminal is not authenticated.' };

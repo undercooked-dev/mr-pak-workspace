@@ -5,6 +5,8 @@ import { api } from '../desktop/client'
 import type { Preview } from '../desktop/types'
 import './documents.css'
 import { ZoomImage } from './ImagePreview'
+import { isIdeaBoard } from '../lib/ideaBoard'
+import IdeaBoardDocument from './IdeaBoardDocument'
 
 const drafts = new Map<string, string>()
 function restoreDraft(key: string, fallback: string) {
@@ -22,6 +24,10 @@ export function MarkdownView({ text, baseUrl }: { text: string; baseUrl?: string
 }
 
 export default function MarkdownDocument({ file }: { file: Preview }) {
+  return isIdeaBoard(file.text || '') ? <IdeaBoardDocument file={file} /> : <MarkdownEditor file={file} />
+}
+
+function MarkdownEditor({ file }: { file: Preview }) {
   const draftKey = `mrmak.md-draft.${file.path}`
   const [saved, setSaved] = useState(file.text || '')
   const [draft, setDraft] = useState(() => restoreDraft(draftKey, file.text || ''))

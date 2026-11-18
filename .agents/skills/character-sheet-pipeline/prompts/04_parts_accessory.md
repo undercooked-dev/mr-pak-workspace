@@ -1,6 +1,6 @@
 # Stage 4 · Accessories — STRICT FRONT (hat, weapon, backpack, jewelry, cape, props)
 
-**Model:** Nano Banana Pro
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback.
 **Resolution:** 2K
 **Reference:** the Stage 2A strict-front A-pose sheet (always attach)
 **Rule:** even accessories go STRICT FRONT first. NO "3/4 hero angle", NO "presentable showcase shot". Front-facing as the item would sit on the character. Side and back views are generated in Stage 5 (multi-view) ONLY if the user requests.
@@ -52,7 +52,7 @@ no three-quarter view, no 3/4 angle, no presentable hero shot, no glamour shot, 
 - [ ] White background, no shadow gradient
 - [ ] 2K, sharp focus
 - [ ] If model defaults to 3/4 hero shot (very common): retry with explicit anti-3/4 negative
-- [ ] **V3 enforcement:** the output is automatically passed through the vision classifier in Stage 4.5. If verdict is `hard_fail`, the escalated-prompt retry in `prompts/08_3q_classifier.md` is invoked automatically. Do NOT bypass the classifier on accessories — accessories are the highest-drift category in V2 data.
+- [ ] Inspect the output with the Stage 4.5 rubric in `prompts/08_3q_classifier.md`. Record the verdict; any retry stays within the authorized scope and chosen image route. This prompt does not install or automatically invoke a classifier service.
 
 ## Why STRICT FRONT even for accessories
 

@@ -1,6 +1,6 @@
 # Stage 2B · Supplementary multi-view character sheet (3 projections + accessories laid out)
 
-**Model:** GPT-Image-2.5 (primary since Sep 2026, source workflow choice; fal id `openai/gpt-image-2.5/flare/*`) | GPT-Image-2, then Seedream V5 Lite (fallbacks) — the GPT-Image family is best at composing multiple framed projections in one image
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback. Supply both references through the selected tool's supported input mechanism.
 **Aspect:** 16:9 landscape
 **Reference:** the user's input character image + the Stage 2A strict-front A-pose sheet (attach both)
 
@@ -47,8 +47,10 @@ no inconsistent character across views, no different face between views, no diff
 - [ ] White background, no shadow, no environment
 - [ ] 16:9 aspect held cleanly with no cropping
 - [ ] Reference-grade clarity (used as visual reference, not input — but still needs to read clearly)
-- [ ] If composition fails (overlap, different faces between views): retry. If after 2 retries still failing, fall back to Seedream V5 Lite. If still failing, escalate.
+- [ ] If composition fails (overlap, different faces between views), revise the failed criterion on the same chosen route within the task budget. After at most 2 retries, report unresolved issues; another image API requires explicit user choice.
 
-## Why GPT-Image-2 and not Nano Banana Pro for this stage
+## Evaluate the actual output
 
-Nano Banana Pro is the workhorse for single-character-single-pose at strict orthographic. But it struggles with multi-panel layouts that hold character identity across panels. GPT-Image-2 is more reliable at composing 3 distinct framed views of the same character on one canvas with consistent identity — and that's the only job for Stage 2B.
+Judge identity, pose and projection consistency from the generated sheet. A
+provider or model name does not establish that a multi-panel composition is
+accurate. Preserve accepted source images and label inferred surfaces for review.

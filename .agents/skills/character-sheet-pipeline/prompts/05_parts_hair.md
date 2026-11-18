@@ -1,6 +1,6 @@
 # Stage 4 · Hair — STRICT FRONT (default ON, opt-out only)
 
-**Model:** Nano Banana Pro
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback.
 **Resolution:** 2K
 **Reference:** the Stage 2A strict-front A-pose sheet + the head extract (both attached if available)
 **Rule:** hair is **always extracted by default**. The user can opt out at Gate 1, but it's an opt-out, not an opt-in. Hair must stay in STRICT FRONT, matching the head's front-facing orientation, so it can be reassembled 1:1 onto the head later.

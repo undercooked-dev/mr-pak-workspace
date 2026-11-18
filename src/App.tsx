@@ -5,6 +5,8 @@ import { parseHash, entityHash, resolveStep, type Route } from './lib/route'
 import MakLogo from './components/MakLogo'
 import Sidebar from './components/Sidebar'
 import Topbar from './components/Topbar'
+import SectionSidebar from './components/SectionSidebar'
+import { workspaceNavigation } from './lib/workspace-navigation'
 import HomeGrid from './components/HomeGrid'
 import EntityControls from './components/EntityControls'
 import ReportBoundary from './components/ReportBoundary'
@@ -43,6 +45,7 @@ export default function App() {
     ? resolveStep(entity.steps.length, route.step, entity.defaultStep)
     : -1
   const step = entity?.steps[stepIndex]
+  const { activeTab } = workspaceNavigation(entity, stepIndex)
   const reportUrl = entity && step ? contentUrl(`/workspace/${entity.folder}/${step.path}`) : null
 
   // Hash → state: entity links navigate natively; this also covers back/forward.
@@ -164,7 +167,9 @@ export default function App() {
           reportUrl={step?.viewer === 'compare3d' || step?.viewer === 'card' ? null : reportUrl}
         />
 
-        <div className="content">
+        <div className="report-layout">
+          {entity && activeTab && <SectionSidebar key={`${entity.id}/${step?.group}/${activeTab}`} entity={entity} stepIndex={stepIndex} onStep={selectStep} />}
+          <div className="content">
           <ReportBoundary key={reportUrl || 'home'} onHome={goHome}>
           {entity && reportUrl && step?.viewer === 'card' ? (
             <Suspense fallback={<div className="report-loading">Opening card…</div>}><EditableCard key={`${entity.id}:${stepIndex}`} url={reportUrl} entityId={entity.id} step={stepIndex} /></Suspense>
@@ -187,6 +192,7 @@ export default function App() {
             />
           )}
           </ReportBoundary>
+          </div>
         </div>
       </main>
     </div>

@@ -1,6 +1,6 @@
 # Stage 4 · Paired items — STRICT FRONT (hands, boots, gloves, gauntlets)
 
-**Model:** Nano Banana Pro
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback.
 **Resolution:** 2K
 **Reference:** the Stage 2A strict-front A-pose sheet (always attach)
 **Rule:** the pair stays together in the frame, at the SAME STRICT-FRONT angle as on the sheet. NO "3/4 outer view". NO "presentable hero angle". Both items at identical strict-front orientation, close-cropped for detail.

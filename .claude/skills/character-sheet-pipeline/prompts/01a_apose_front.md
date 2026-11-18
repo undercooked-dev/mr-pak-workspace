@@ -1,6 +1,6 @@
 # Stage 2A · Strict-front A-pose sheet — the workhorse
 
-**Model:** Nano Banana Pro (primary) | Nano Banana 2 (fallback). NEVER GPT-Image-2/2.5 here.
+**Image route:** Built-in imagegen by default; preserve an explicit user choice of another provider/model. No automatic image-API fallback.
 **Resolution:** 2K (2048×2048 or closest 1:1)
 **Aspect:** 1:1 square
 **Reference:** the user's input character image
@@ -32,4 +32,4 @@ no three-quarter view, no 3/4 angle, no body rotation, no body twist, no contrap
 - [ ] No background elements, no floor, no props in the scene that weren't on the source
 - [ ] Character matches the source image — same face, same outfit, same accessories
 - [ ] Sharp focus across the entire body at 2K
-- [ ] If the model returns 3/4, retry with stronger STRICT FRONT language. Falling back to Nano Banana 2 is fine. If after 3 attempts no model holds strict front, escalate to the user — DO NOT ship a 3/4 sheet.
+- [ ] If the model returns 3/4, retry with stronger STRICT FRONT language on the same chosen route, within the task budget. After at most 3 total attempts without strict front, stop and report the issue; an alternative image API requires explicit user choice. Do not label a 3/4 sheet strict-front.
