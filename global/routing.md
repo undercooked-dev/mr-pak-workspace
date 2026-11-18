@@ -10,7 +10,7 @@ These routes apply in every repository. A repository's own `AGENTS.md` or `CLAUD
 | Image generation and editing | Codex built-in image generation; AtlasCloud once Codex credits are exhausted | `image-edit` skill |
 | Video generation and editing | AtlasCloud | `video-edit` skill |
 | Audio generation | AtlasCloud | `atlascloud-generation` skill |
-| 3D model generation and Tripo texturing | The user, by hand in Tripo Studio | `tripo-handoff` skill; agents never call Tripo |
+| 3D model generation and Tripo texturing | Tripo, by the path the user picks at the handoff: by hand in Tripo Studio, or through the Tripo API | `tripo-handoff` skill; ask each time unless the repository assigns the step |
 | Accepting a visual or playable result | The user | Agent verification does not replace it |
 
 - Plan before implementing anything that takes more than one step, and hand execution to the tier the plan names.

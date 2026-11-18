@@ -13,7 +13,7 @@ Follow the route for each medium by loading its skill before the first job:
 - images: `image-edit` (Codex built-in imagegen first; AtlasCloud once Codex credits are exhausted);
 - video: `video-edit` (AtlasCloud);
 - audio: `atlascloud-generation`;
-- 3D models: none. They are made by the owner in Tripo Studio. If the brief asks you to generate a mesh, stop and say so.
+- 3D models: `tripo-handoff`, and only when the brief states that the owner chose the API path for this model. Otherwise stop and say the owner has to choose between doing it by hand in Tripo Studio and the API.
 
 Rules that hold for every job:
 

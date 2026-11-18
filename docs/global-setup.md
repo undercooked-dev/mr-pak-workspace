@@ -35,7 +35,7 @@ npm run global:install      # skills, agents and routing for every project
 | Independent check of finished work | | `reviewer` |
 | Images: Codex built-in generation, then AtlasCloud once Codex credits are exhausted | `image-edit` | `media-runner` |
 | Video: AtlasCloud | `video-edit` | `media-runner` |
-| 3D models: the user, in Tripo Studio | `tripo-handoff` | |
+| 3D models: Tripo, by hand in Tripo Studio or through the API, as the user picks at each handoff | `tripo-handoff` | `media-runner` (API path) |
 
 Model and effort are pinned in each agent file's frontmatter. Change them there when a newer model replaces one.
 
@@ -51,6 +51,8 @@ npm run workspace -- sync  ../SomeGame/mr-mak-workspace                      # a
 ```
 
 `slim` removes the app source, tooling and the skills that exist here, and keeps cards, context, knowledge, project-only scripts and skills, keys and local state. `sync` refreshes `workspace/_shared`, writes `Start Workspace.command` and `.cmd` beside the workspace, and creates three ignored links (`desktop`, `docs`, `node_modules`) back to this repository so project scripts and document links keep resolving.
+
+A workspace can rebuild pages it derives from its repository each time it is opened: if it has `scripts/prelaunch.mjs`, the launcher runs it with Node before starting the app. Use this to mirror the project's own documents into a card instead of keeping a second tracked copy.
 
 The app is single-instance: it shows one workspace at a time. To switch projects, quit Mr. Mak and start the other project's launcher. Quitting stops that workspace's running chats, so the launcher never does it for you.
 

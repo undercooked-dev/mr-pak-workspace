@@ -45,7 +45,7 @@ Name these in the stage that needs them so the executor does not improvise a pro
 | Image generation or editing | `image-edit` |
 | Video generation or editing | `video-edit` |
 | Audio generation | `atlascloud-generation` |
-| A 3D model or its textures | `tripo-handoff` (the owner does this by hand) |
+| A 3D model or its textures | `tripo-handoff` (the owner picks manual or API at the handoff) |
 | A visual or playable result accepted | the owner |
 
 ## After the plan

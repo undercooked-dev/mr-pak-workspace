@@ -22,7 +22,7 @@ explicit user choice of another image provider.
 | Generate or edit a raster image | `image-edit` |
 | Generate or edit video | `video-edit` |
 | Generate audio, or run the AtlasCloud side of an image or video job | `atlascloud-generation` |
-| Get a mesh or its textures made by the user in Tripo Studio | `tripo-handoff` |
+| Get a mesh or its textures made in Tripo, by hand or through its API | `tripo-handoff` |
 | Editable procedural geometry in Three.js | `img2threejs` |
 | Validate and deliver a PBR material | `materials-to-game` |
 | Analyze motion timing | `motion-reference-workflow` or `video-watch` |

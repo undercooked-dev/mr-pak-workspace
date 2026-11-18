@@ -68,13 +68,17 @@ if pgrep -x mrmak-workspace >/dev/null 2>&1 && [ -f "$state" ] && ! grep -qF "\\
   echo "Quit it first (this stops its running chats), then run this again."
   read -r -p "Press Return to close." _; exit 1
 fi
+# A workspace may rebuild pages it derives from its repository before the app reads them.
+if [ -f "$workspace/scripts/prelaunch.mjs" ] && command -v node >/dev/null 2>&1; then
+  node "$workspace/scripts/prelaunch.mjs" || echo "The workspace's prelaunch step failed; opening it as it is."
+fi
 for app in "/Applications/Mr. Mak Workspace.app" "$HOME/Applications/Mr. Mak Workspace.app"; do
   if [ -d "$app" ]; then open -a "$app" --args --repo "$workspace"; exit 0; fi
 done
 echo "Mr. Mak Workspace is not installed. Build it in the shared mr-pak-workspace repository: ./setup.sh desktop"
 read -r -p "Press Return to close." _
 `;
-  const cmd = `@echo off\r\nsetlocal\r\nrem Opens this repository's workspace in the shared Mr. Mak app. The app shows one workspace at a time.\r\nset "WORKSPACE=%~dp0${folder}"\r\nif not exist "%WORKSPACE%\\workspace\\workspace.json" (\r\n  echo Workspace files are missing: %WORKSPACE%\r\n  exit /b 1\r\n)\r\nif exist "%LOCALAPPDATA%\\Mr. Mak Workspace\\mrmak-workspace.exe" (\r\n  start "" "%LOCALAPPDATA%\\Mr. Mak Workspace\\mrmak-workspace.exe" --repo "%WORKSPACE%"\r\n  exit /b 0\r\n)\r\necho Mr. Mak Workspace is not installed. Install it from the shared mr-pak-workspace repository.\r\npause\r\n`;
+  const cmd = `@echo off\r\nsetlocal\r\nrem Opens this repository's workspace in the shared Mr. Mak app. The app shows one workspace at a time.\r\nset "WORKSPACE=%~dp0${folder}"\r\nif not exist "%WORKSPACE%\\workspace\\workspace.json" (\r\n  echo Workspace files are missing: %WORKSPACE%\r\n  exit /b 1\r\n)\r\nif exist "%WORKSPACE%\\scripts\\prelaunch.mjs" node "%WORKSPACE%\\scripts\\prelaunch.mjs"\r\nif exist "%LOCALAPPDATA%\\Mr. Mak Workspace\\mrmak-workspace.exe" (\r\n  start "" "%LOCALAPPDATA%\\Mr. Mak Workspace\\mrmak-workspace.exe" --repo "%WORKSPACE%"\r\n  exit /b 0\r\n)\r\necho Mr. Mak Workspace is not installed. Install it from the shared mr-pak-workspace repository.\r\npause\r\n`;
   for (const [name, text, mode] of [['Start Workspace.command', command, 0o755], ['Start Workspace.cmd', cmd, 0o644]]) {
     const file = path.join(parent, name);
     if (await readFile(file, 'utf8').catch(() => null) === text) continue;

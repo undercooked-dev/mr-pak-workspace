@@ -50,6 +50,8 @@ test('slim reports first, then removes shared app code and keeps project content
   const ignore = await readFile(path.join(dir, '.gitignore'), 'utf8');
   for (const entry of ['/desktop', '/docs', '/node_modules', '.cache/']) assert.ok(ignore.split('\n').includes(entry), `${entry} ignored`);
   assert.match(await readFile(path.join(repo, 'Start Workspace.command'), 'utf8'), /--repo "\$workspace"/);
+  assert.match(await readFile(path.join(repo, 'Start Workspace.command'), 'utf8'), /node "\$workspace\/scripts\/prelaunch\.mjs"/);
+  assert.match(await readFile(path.join(repo, 'Start Workspace.cmd'), 'utf8'), /scripts\\prelaunch\.mjs/);
 
   const before = await readFile(path.join(dir, '.gitignore'), 'utf8');
   await sync(dir, quiet);
