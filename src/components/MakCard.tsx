@@ -24,6 +24,11 @@ export default function MakCard({ entity }: { entity: WorkspaceEntity }) {
           <span aria-hidden="true">{categoryIcon(entity.category)}</span>
           {entity.category || 'other'}
         </span>
+        {entity.project && (
+          <span className="chip chip-project" title={`Project: ${entity.project}`}>
+            {entity.project}
+          </span>
+        )}
         {entity.pinned && <span className="chip chip-pin">pinned</span>}
       </div>
 

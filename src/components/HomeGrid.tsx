@@ -1,7 +1,8 @@
-import type { WorkspaceEntity } from '../types'
+import type { WorkspaceEntity, WorkspaceMount } from '../types'
 import { categoryIcon } from '../lib/categories'
 import MakCard from './MakCard'
 import MakLogo from './MakLogo'
+import ProjectFilter from './ProjectFilter'
 
 interface HomeGridProps {
   entities: WorkspaceEntity[]
@@ -10,6 +11,13 @@ interface HomeGridProps {
   offline: boolean
   searching: boolean
   query: string
+  /** Mounted projects with cards; the filter shows when there are two or more. */
+  projects: WorkspaceMount[]
+  project: string
+  projectName: string
+  onProject: (id: string) => void
+  /** Why some project cards could not be shown. */
+  warnings: string[]
 }
 
 function greeting(): string {
@@ -27,6 +35,11 @@ export default function HomeGrid({
   offline,
   searching,
   query,
+  projects,
+  project,
+  projectName,
+  onProject,
+  warnings,
 }: HomeGridProps) {
   const activeCount = entities.filter(e => e.status === 'active').length
   const categoryCount = new Set(entities.map(e => e.category || 'other')).size
@@ -46,11 +59,31 @@ export default function HomeGrid({
         </div>
       </header>
 
+      {projects.length > 1 && (
+        <div className="home-tools">
+          <ProjectFilter projects={projects} value={project} onChange={onProject} />
+        </div>
+      )}
+
       {searching && (
         <p className="home-filter">
           {shown === 0 ? 'No matches for' : `${shown} match${shown === 1 ? '' : 'es'} for`}{' '}
-          “{query.trim()}” — archive included
+          “{query.trim()}” — archive included{projectName && `, ${projectName} only`}
         </p>
+      )}
+
+      {warnings.length > 0 && (
+        <details className="home-warnings">
+          <summary>
+            Some project cards could not be shown · {warnings.length}{' '}
+            {warnings.length === 1 ? 'reason' : 'reasons'}
+          </summary>
+          <ul>
+            {warnings.map((warning, index) => (
+              <li key={index}>{warning}</li>
+            ))}
+          </ul>
+        </details>
       )}
 
       {pinned.length > 0 && (
@@ -87,7 +120,9 @@ export default function HomeGrid({
         <div className="home-empty">
           {offline
             ? 'Could not load workspace.json — is the public/workspace link in place? Run npm run dev again, sir.'
-            : 'Nothing here yet. New work will appear as cards, sir.'}
+            : projectName
+              ? `Nothing from ${projectName} here yet, sir.`
+              : 'Nothing here yet. New work will appear as cards, sir.'}
         </div>
       )}
     </div>

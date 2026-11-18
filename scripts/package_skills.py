@@ -21,7 +21,7 @@ SKILLS = (
 )
 SUPPORT = (
     'docs/skills.md', 'processes/creative-production.md',
-    'docs/editable-cards.md', 'desktop/service/card-schema.mjs',
+    'docs/editable-cards.md', 'docs/page-data.md', 'desktop/service/card-schema.mjs',
     'docs/assets/editable-cards-editor.png',
     'docs/assets/editable-cards-gallery.png',
     'docs/assets/editable-cards-research.png',

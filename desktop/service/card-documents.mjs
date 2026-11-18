@@ -3,7 +3,8 @@ import { mkdir, readFile, realpath, writeFile, unlink, rmdir } from 'node:fs/pro
 import path from 'node:path';
 import { CARD_FORMAT, CARD_VERSION, CARD_MAX_BYTES, cardTemplates, localCardPath, validateCard } from './card-schema.mjs';
 import { realFile, saveJson, within } from './util.mjs';
-import { localDay } from './workspace.mjs';
+import { localDay, parseRegistry } from './workspace.mjs';
+import { mountRegistry } from './mounts.mjs';
 
 const hash = source => createHash('sha256').update(source).digest('hex');
 const fail = (message, status = 400) => { throw Object.assign(new Error(message), { status }); };
@@ -22,15 +23,17 @@ export class CardDocuments {
   }
   async resolve(id, step) {
     if (!Number.isInteger(step) || step < 0) fail('Choose a card tab.');
-    const entity = (await this.workspace.registry()).entities.find(item => item.id === id);
+    const owner = await this.workspace.locate(id), entity = owner?.entity;
     const selected = entity?.steps?.[step];
     if (!entity || selected?.viewer !== 'card' || !localCardPath(entity.folder) || !localCardPath(selected.path) || !selected.path.endsWith('.card.json')) fail('This tab is not an editable card.', 404);
-    const workspaceRoot = await realpath(path.join(this.repo, 'workspace'));
+    const workspaceRoot = await realpath(path.join(owner.root, 'workspace'));
+    // A project's card stays inside that project's workspace folder.
+    if (owner.mount && !within(owner.mount.root, workspaceRoot)) fail('Link leaves this location', 403);
     const { file: folder, info: folderInfo } = await realFile(workspaceRoot, entity.folder);
     if (!folderInfo.isDirectory()) fail('Card folder not found.', 404);
     const { file, info } = await realFile(folder, selected.path);
     if (!info.isFile() || info.size > CARD_MAX_BYTES) fail('Choose an editable card of up to 1 MB.');
-    return { entity, selected, file, root: path.dirname(file), workspaceRoot };
+    return { entity, selected, file, root: path.dirname(file), workspaceRoot, mount: owner.mount, registry: owner.file };
   }
   async read(id, step) {
     const target = await this.resolve(id, step), source = await readFile(target.file, 'utf8');
@@ -38,14 +41,14 @@ export class CardDocuments {
     let document; try { document = JSON.parse(source); } catch { fail('This card contains invalid JSON. Its original file has been kept.'); }
     return { document: validateCard(document), revision: hash(source) };
   }
-  async registryChange(update) {
+  async registryChange(update, file = this.workspace.file) {
     for (let attempt = 0; attempt < 6; attempt++) {
-      const source = await readFile(this.workspace.file, 'utf8'), registry = JSON.parse(source);
+      const source = await readFile(file, 'utf8'), registry = parseRegistry(source);
       if (!Array.isArray(registry.entities)) fail('Workspace registry is not ready.');
       update(registry);
       try {
-        await saveJson(this.workspace.file, registry, { beforeReplace: async () => {
-          if (await readFile(this.workspace.file, 'utf8') !== source) throw Object.assign(new Error('Workspace changed while saving.'), { code: 'ESTALE' });
+        await saveJson(file, registry, { beforeReplace: async () => {
+          if (await readFile(file, 'utf8') !== source) throw Object.assign(new Error('Workspace changed while saving.'), { code: 'ESTALE' });
         } });
         return;
       } catch (error) { if (error.code !== 'ESTALE' || attempt === 5) throw error; }
@@ -62,13 +65,14 @@ export class CardDocuments {
     return this.write(async () => {
       const target = await this.resolve(id, step), source = await readFile(target.file, 'utf8');
       if (hash(source) !== revision) conflict();
-      const backups = path.join(this.repo, '.mrmak', 'card-backups');
+      // A project's recovery copies stay in the home repository's state, under its mount id.
+      const backups = path.join(this.repo, '.mrmak', 'card-backups', ...(target.mount ? ['mounts', target.mount.id] : []));
       await mkdir(backups, { recursive: true });
       const actualBackups = await realpath(backups);
       if (!within(await realpath(this.repo), actualBackups)) fail('The recovery folder must stay inside this repository.');
       const backupId = `${Date.now()}-${randomUUID()}`;
       await writeFile(path.join(actualBackups, `${backupId}.card.json`), source, { flag: 'wx', mode: 0o600 });
-      await writeFile(path.join(actualBackups, `${backupId}.json`), sourceOf({ entityId: id, step, path: path.relative(this.repo, target.file), revision, savedAt: new Date().toISOString() }), { flag: 'wx', mode: 0o600 });
+      await writeFile(path.join(actualBackups, `${backupId}.json`), sourceOf({ entityId: id, step, ...(target.mount ? { mount: target.mount.id, path: target.file } : { path: path.relative(this.repo, target.file) }), revision, savedAt: new Date().toISOString() }), { flag: 'wx', mode: 0o600 });
       await saveJson(target.file, document, { beforeReplace: async () => {
         const current = await this.resolve(id, step);
         if (current.file !== target.file || hash(await readFile(current.file)) !== revision) conflict();
@@ -78,34 +82,40 @@ export class CardDocuments {
         await this.registryChange(registry => {
           const entity = registry.entities.find(item => item.id === id);
           if (!entity) throw new Error('Card was removed from the Workspace.');
+          if (target.mount) { delete entity.project; delete entity.mount; }
           entity.updated = localDay();
           if (entity.steps.length === 1) {
             entity.title = document.title;
             entity.description = (document.summary || '').replace(/\s+/g, ' ').slice(0, 240);
           }
-        });
+        }, target.registry);
       } catch { warning = 'Your content was saved, but the Workspace listing could not be refreshed. Reopen the card to refresh its listing.'; }
       this.workspace.changed();
       return { document, revision: hash(replacement), ...(warning ? { warning } : {}) };
     });
   }
+  // `mount` (optional) is the id of a mounted project; the card is then created in its workspace.
   create(options) {
-    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => !['title', 'template'].includes(key))) fail('Enter a title and choose Gallery or Research.');
-    const { title, template } = options;
+    if (!options || typeof options !== 'object' || Array.isArray(options) || Object.keys(options).some(key => !['title', 'template', 'mount'].includes(key))) fail('Enter a title and choose Gallery or Research.');
+    const { title, template, mount: mountId } = options;
     if (typeof title !== 'string' || !title.trim() || title.length > 200 || /[\x00-\x1f]/.test(title) || !cardTemplates.includes(template)) fail('Enter a title and choose Gallery or Research.');
+    if (mountId !== undefined && (typeof mountId !== 'string' || !mountId)) fail('Choose a project from the list.');
     return this.write(async () => {
+      const mount = mountId === undefined ? null : (await this.workspace.mounts?.list())?.mounts.find(item => item.id === mountId);
+      if (mountId !== undefined && !mount) fail('Choose a project from the list.');
       const document = { format: CARD_FORMAT, version: CARD_VERSION, template, title: title.trim(), summary: '', items: [] };
       const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || template;
       const id = `${slug}-${randomUUID().slice(0, 8)}`, folder = `${localDay()}_${id}`;
-      const workspaceRoot = await realpath(path.join(this.repo, 'workspace'));
+      const workspaceRoot = await realpath(path.join(mount ? mount.root : this.repo, 'workspace'));
+      if (mount && !within(mount.root, workspaceRoot)) fail('Link leaves this location', 403);
       const directory = path.join(workspaceRoot, folder), file = path.join(directory, 'content.card.json');
       const entity = { id, title: document.title, description: '', type: 'standalone', category: template === 'gallery' ? 'image-gen' : 'research', created: localDay(), updated: localDay(), folder, steps: [{ name: template === 'gallery' ? 'Gallery' : 'Research', path: 'content.card.json', viewer: 'card' }], defaultStep: 0, status: 'active' };
       await mkdir(directory);
       await writeFile(file, sourceOf(document), { flag: 'wx' });
-      try { await this.registryChange(registry => { registry.entities.push(entity); }); }
+      try { await this.registryChange(registry => { registry.entities.push(entity); }, mount ? mountRegistry(mount) : this.workspace.file); }
       catch (error) { await unlink(file).catch(() => {}); await rmdir(directory).catch(() => {}); throw error; }
       this.workspace.changed();
-      return { entity, document, revision: hash(sourceOf(document)) };
+      return { entity: mount ? { ...entity, project: mount.name, mount: mount.id } : entity, document, revision: hash(sourceOf(document)) };
     });
   }
   async image(id, step, request, name) {

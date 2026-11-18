@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import type { WorkspaceEntity } from './types'
-import { useWorkspace, archiveCutoff } from './lib/workspace'
+import { useWorkspace, archiveCutoff, cardProjects, useProjectFilter } from './lib/workspace'
 import { parseHash, entityHash, resolveStep, type Route } from './lib/route'
 import MakLogo from './components/MakLogo'
 import Sidebar from './components/Sidebar'
@@ -29,6 +29,7 @@ export default function App() {
   const [route, setRoute] = useState<Route>(parseHash)
   const [query, setQuery] = useState('')
   const [showArchived, setShowArchived] = useState(false)
+  const [projectChoice, chooseProject] = useProjectFilter()
   const [collapsed, setCollapsed] = useState(
     () => isDesktop || localStorage.getItem('mak.sidebarCollapsed') === '1',
   )
@@ -106,14 +107,21 @@ export default function App() {
     e.status === 'archived' || (!e.pinned && !e.sample && lastTouched(e) < cutoff)
   const matchesQuery = (e: WorkspaceEntity) =>
     !searching ||
-    [e.title, e.description, e.category, e.id].some(s => s && s.toLowerCase().includes(q))
+    [e.title, e.description, e.category, e.id, e.project].some(s => s && s.toLowerCase().includes(q))
+
+  // The project filter appears once cards come from two or more mounted projects.
+  // A remembered project that no longer has cards falls back to all projects.
+  const projects = cardProjects(entities)
+  const project = projects.length > 1 && projects.some(p => p.id === projectChoice) ? projectChoice : ''
+  const projectName = projects.find(p => p.id === project)?.name ?? ''
+  const inProject = (e: WorkspaceEntity) => !project || e.mount === project
 
   // Search digs through everything, archive included; otherwise the
-  // archive stays hidden behind the toggle.
+  // archive stays hidden behind the toggle. The project filter narrows both.
   const visible = entities.filter(
-    e => matchesQuery(e) && (searching || showArchived || !isArchived(e)),
+    e => inProject(e) && matchesQuery(e) && (searching || showArchived || !isArchived(e)),
   )
-  const archivedCount = entities.filter(isArchived).length
+  const archivedCount = entities.filter(e => inProject(e) && isArchived(e)).length
 
   const pinned = visible.filter(e => e.pinned).sort(byFreshness)
   const rest = visible.filter(e => !e.pinned).sort(byFreshness)
@@ -141,6 +149,9 @@ export default function App() {
         archivedCount={archivedCount}
         showArchived={showArchived}
         onToggleArchived={() => setShowArchived(v => !v)}
+        projects={projects}
+        project={project}
+        onProject={chooseProject}
         total={entities.length}
         offline={offline}
         lastSync={lastSync}
@@ -165,6 +176,8 @@ export default function App() {
           // A compare3d step's "report" is a JSON manifest — opening it raw in a
           // tab helps nobody, so the external link is hidden for those.
           reportUrl={step?.viewer === 'compare3d' || step?.viewer === 'card' ? null : reportUrl}
+          mounts={workspace.mounts ?? []}
+          project={project}
         />
 
         <div className="report-layout">
@@ -180,7 +193,7 @@ export default function App() {
               baseUrl={reportUrl.slice(0, reportUrl.lastIndexOf('/'))}
             /></Suspense>
           ) : entity && reportUrl ? (
-            <Suspense fallback={<div className="boot"><MakLogo size={56} animated={false} /></div>}><ReportViewer key={reportUrl} url={reportUrl} title={step?.name ?? entity.title} relativePath={`workspace/${entity.folder}/${step?.path}`} /></Suspense>
+            <Suspense fallback={<div className="boot"><MakLogo size={56} animated={false} /></div>}><ReportViewer key={reportUrl} url={reportUrl} title={step?.name ?? entity.title} relativePath={`workspace/${entity.folder}/${step?.path}`} card={step ? { entityId: entity.id, step: stepIndex, path: step.path } : undefined} /></Suspense>
           ) : (
             <HomeGrid
               entities={entities}
@@ -189,6 +202,11 @@ export default function App() {
               offline={offline}
               searching={searching}
               query={query}
+              projects={projects}
+              project={project}
+              projectName={projectName}
+              onProject={chooseProject}
+              warnings={workspace.warnings ?? []}
             />
           )}
           </ReportBoundary>

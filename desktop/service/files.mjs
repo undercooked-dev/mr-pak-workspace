@@ -18,7 +18,8 @@ const mime = {
 // WebView2 and WebKitGTK may not, so they keep the "Open in its application" card.
 if (isMacOS) Object.assign(mime, { '.mov': 'video/quicktime', '.heic': 'image/heic', '.heif': 'image/heif' });
 const textExtensions = new Set(['.txt', '.md', '.json', '.js', '.mjs', '.ts', '.tsx', '.jsx', '.css', '.py', '.rs', '.toml', '.yaml', '.yml', '.csv', '.log', '.xml', '.ini', '.ps1', '.cmd', '.sh', '.gitignore']);
-const secretPart = value => value.startsWith('.') || /^(node_modules|target|oauth_.*\.json|.*_secret.*\.json|tokens?\.json|auth\.json)$/i.test(value);
+// Names a report is never served; page data files (page-data.mjs) refuse the same names.
+export const secretPart = value => value.startsWith('.') || /^(node_modules|target|oauth_.*\.json|.*_secret.*\.json|tokens?\.json|auth\.json)$/i.test(value);
 const SCOPED_GRANT_MS = 12 * 60 * 60 * 1000;
 const sharedReportFile = relative => /^workspace\/_shared\/(report\.(css|js)|examples\.css)$/.test(relative);
 const encodePath = relative => relative.split('/').map(encodeURIComponent).join('/');
@@ -44,20 +45,27 @@ export async function serveFile(request, response, file, info, headers = {}) {
 }
 
 export class Files {
-  constructor(repo) { this.repo = repo; this.grants = new Map(); this.scoped = new Map(); this.sites = new Map(); this.repoGrant = this.grant(repo); this.writes = Promise.resolve(); }
-  scopedGrant(root, relative) {
+  constructor(repo, mounts = null) { this.repo = repo; this.mounts = mounts; this.grants = new Map(); this.scoped = new Map(); this.sites = new Map(); this.repoGrant = this.grant(repo); this.writes = Promise.resolve(); }
+  // `workspace` marks the home repository or a project workspace mounted into it.
+  scopedGrant(root, relative, workspace = root === this.repo) {
     const folder = relative.split('/').slice(0, -1);
     // A report can use its own card and the shared chrome, never the whole repository.
-    const prefix = root === this.repo && folder[0] === 'workspace' && folder.length > 1 ? `workspace/${folder[1]}/`
-      : root === this.repo && (!folder.length || folder.join('/') === 'workspace') ? relative
+    const prefix = workspace && folder[0] === 'workspace' && folder.length > 1 ? `workspace/${folder[1]}/`
+      : workspace && (!folder.length || folder.join('/') === 'workspace') ? relative
       : folder.length ? folder.join('/') + '/' : '';
     const now = Date.now();
+    // A lapsed grant is renewed rather than replaced, so a reopened report keeps its address,
+    // and a card tab left open past the grant's life can still be renewed for its page.
     for (const [token, grant] of this.scoped) {
-      if (grant.expires < now) this.dropScoped(token);
-      else if (grant.root === root && grant.prefix === prefix) { grant.expires = now + SCOPED_GRANT_MS; return token; }
+      if (grant.root === root && grant.prefix === prefix && grant.workspace === workspace) { grant.expires = now + SCOPED_GRANT_MS; return token; }
     }
-    if (this.scoped.size >= 200) this.dropScoped(this.scoped.keys().next().value);
-    const token = secret(); this.scoped.set(token, { root, prefix, expires: now + SCOPED_GRANT_MS }); return token;
+    if (this.scoped.size >= 200) {
+      // The least recently used grant gives way.
+      let oldest = null;
+      for (const [token, grant] of this.scoped) if (!oldest || grant.expires < this.scoped.get(oldest).expires) oldest = token;
+      this.dropScoped(oldest);
+    }
+    const token = secret(); this.scoped.set(token, { root, prefix, workspace, expires: now + SCOPED_GRANT_MS }); return token;
   }
   // Each report folder is served from its own local port. Its pages share one origin, so a
   // multi-page report can frame and read its own pages, while other reports, the UI and the
@@ -79,6 +87,20 @@ export class Files {
     this.sites.set(token, site);
     return site.ready;
   }
+  // The folder grant behind an open report port, so a page's request to the app can be tied to the
+  // card folder it was served from. The app names the card tab it displays; when `accepts` confirms
+  // that tab's folder owns the grant, the grant is renewed, also after it lapsed while the tab sat
+  // idle. Only the app can renew a lapsed grant: the page's own file requests cannot.
+  reportGrant(origin, accepts) {
+    for (const [token, site] of this.sites) {
+      if (site.origin !== origin) continue;
+      const grant = this.scoped.get(token);
+      if (!grant || !accepts(grant)) return null;
+      grant.expires = Date.now() + SCOPED_GRANT_MS;
+      return grant;
+    }
+    return null;
+  }
   dropScoped(token) {
     this.scoped.delete(token);
     const site = this.sites.get(token);
@@ -93,14 +115,29 @@ export class Files {
     for (const [token, value] of this.grants) if (value === root) return token;
     const token = secret(); this.grants.set(token, root); return token;
   }
+  // Whether the repository grant serves a path: inside the repository, with no private name on the way.
+  repoServes(absolute) { return within(this.repo, absolute) && !path.relative(this.repo, absolute).split(/[\\/]/).some(secretPart); }
   url(file) {
     const absolute = path.resolve(file);
-    const relative = path.relative(this.repo, absolute);
-    const root = within(this.repo, absolute) && !relative.split(/[\\/]/).some(secretPart) ? this.repo : path.dirname(absolute);
+    const root = this.repoServes(absolute) ? this.repo : path.dirname(absolute);
     return `${this.origin}/view/${this.grant(root)}/${path.relative(root, absolute).split(path.sep).map(encodeURIComponent).join('/')}`;
   }
+  // A file in a mounted card folder keeps its home-repository address, so the card's own
+  // links and the shared report assets resolve exactly as they do for a home card. Below a
+  // name the repository grant does not serve, it gets its own folder's grant, as a home file does.
+  async viewUrl(file) {
+    const address = this.mounts?.enabled ? await this.mounts.address(file) : null;
+    return this.url(address && this.repoServes(address) ? address : file);
+  }
+  // A mounted card's files are addressed as workspace/<folder>/… of the home repository.
+  async real(requested) {
+    const located = this.mounts?.enabled ? await this.mounts.locate(requested) : null;
+    const actual = await realpath(located ? located.file : requested);
+    if (located && !within(located.mount.root, actual)) throw Object.assign(new Error('Link leaves this location'), { status: 403 });
+    return { actual, mount: located?.mount || null };
+  }
   async list(folder = this.repo, mode = 'main', query = '') {
-    const actual = await realpath(path.resolve(expandHome(folder)));
+    const { actual } = await this.real(path.resolve(expandHome(folder)));
     const entries = await readdir(actual, { withFileTypes: true });
     const atRoot = actual.toLowerCase() === this.repo.toLowerCase();
     const filtered = entries.filter(entry => (!atRoot || mode === 'all' || ['inbox', 'projects', 'workspace', 'knowledge', 'processes', 'context'].includes(entry.name)) && (!query || entry.name.normalize('NFC').toLowerCase().includes(query.normalize('NFC').toLowerCase())));
@@ -119,33 +156,35 @@ export class Files {
     return { path: actual, parent: path.dirname(actual), entries: result, truncated: filtered.length > 1500, mode };
   }
   async preview(file) {
-    const actual = await realpath(path.resolve(expandHome(file)));
+    const { actual } = await this.real(path.resolve(expandHome(file)));
     const info = await stat(actual);
     if (!info.isFile()) throw new Error('Choose a file to preview');
     const ext = path.extname(actual).toLowerCase();
     const base = { path: actual, name: path.basename(actual), size: info.size };
-    if (['.html', '.htm', '.pdf'].includes(ext)) return { ...base, kind: 'document', url: this.url(actual) };
-    if (/^image\//.test(mime[ext] || '')) return { ...base, kind: 'image', url: this.url(actual) };
-    if (/^(video|audio)\//.test(mime[ext] || '')) return { ...base, kind: mime[ext].split('/')[0], url: this.url(actual) };
+    if (['.html', '.htm', '.pdf'].includes(ext)) return { ...base, kind: 'document', url: await this.viewUrl(actual) };
+    if (/^image\//.test(mime[ext] || '')) return { ...base, kind: 'image', url: await this.viewUrl(actual) };
+    if (/^(video|audio)\//.test(mime[ext] || '')) return { ...base, kind: mime[ext].split('/')[0], url: await this.viewUrl(actual) };
     if (textExtensions.has(ext) || info.size === 0 || path.basename(actual).startsWith('.env')) {
       if (info.size > 2 * 1024 * 1024) return { ...base, kind: 'unsupported', reason: 'This text file is larger than the 2 MB preview limit.' };
       const bytes = await readFile(actual);
-      return { ...base, kind: 'text', text: bytes.toString('utf8'), ...(ext === '.md' ? { revision: createHash('sha256').update(bytes).digest('hex'), url: this.url(actual) } : {}) };
+      return { ...base, kind: 'text', text: bytes.toString('utf8'), ...(ext === '.md' ? { revision: createHash('sha256').update(bytes).digest('hex'), url: await this.viewUrl(actual) } : {}) };
     }
     return { ...base, kind: 'unsupported', reason: 'Open this file in its desktop application.' };
   }
   async saveMarkdown({ path: requested, text, revision }) {
     if (typeof requested !== 'string' || path.extname(requested).toLowerCase() !== '.md' || typeof text !== 'string' || Buffer.byteLength(text) > 2 * 1024 * 1024 || !/^[a-f0-9]{64}$/.test(revision || '')) throw new Error('Choose a Markdown file of up to 2 MB with a current revision.');
     const operation = this.writes.catch(() => {}).then(async () => {
-      const actual = await realpath(path.resolve(requested));
+      const { actual, mount: located } = await this.real(path.resolve(requested));
       if (path.extname(actual).toLowerCase() !== '.md') throw new Error('Only Markdown files can be edited.');
       const original = await readFile(actual);
       if (createHash('sha256').update(original).digest('hex') !== revision) throw Object.assign(new Error('This file changed on disk. Your draft is kept. Reopen the file to compare before saving.'), { status: 409 });
-      const backupFolder = path.join(this.repo, '.mrmak', 'markdown-backups');
+      // A project's recovery copies stay in the home repository's state, under its mount id.
+      const mount = located || (this.mounts?.enabled ? await this.mounts.containing(actual) : null);
+      const backupFolder = path.join(this.repo, '.mrmak', 'markdown-backups', ...(mount ? ['mounts', mount.id] : []));
       await mkdir(backupFolder, { recursive: true });
       const id = `${Date.now()}-${randomUUID()}`;
       await writeFile(path.join(backupFolder, `${id}.md`), original, { flag: 'wx' });
-      await writeFile(path.join(backupFolder, `${id}.json`), JSON.stringify({ path: actual, revision, savedAt: new Date().toISOString() }), { flag: 'wx' });
+      await writeFile(path.join(backupFolder, `${id}.json`), JSON.stringify({ path: actual, ...(mount ? { mount: mount.id } : {}), revision, savedAt: new Date().toISOString() }), { flag: 'wx' });
       const temp = path.join(path.dirname(actual), `.${path.basename(actual)}.${id}.tmp`);
       try {
         await writeFile(temp, text, { flag: 'wx' });
@@ -161,24 +200,28 @@ export class Files {
     const match = /^\/view\/([\w-]+)\/(.*)$/.exec(url.pathname);
     // A folder's port serves that folder's grant only.
     const scoped = match && (!siteToken || match[1] === siteToken) ? this.scoped.get(match[1]) : null;
-    if (scoped && scoped.expires < Date.now()) {
-      this.scoped.delete(match[1]); response.once('close', () => this.dropScoped(match[1]));
-      throw Object.assign(new Error('Preview not found'), { status: 404 });
-    }
+    // A lapsed grant serves nothing, but stays known, so the app can renew it for a card tab it
+    // still displays. 410, not 404: a page must not read an existing file as missing.
+    if (scoped && scoped.expires < Date.now()) throw Object.assign(new Error('This report was idle for too long. Reopen it in the Workspace.'), { status: 410 });
     if (!match || !(scoped || (!siteToken && this.grants.has(match[1])))) throw Object.assign(new Error('Preview not found'), { status: 404 });
     const relative = decodeURIComponent(match[2]).replaceAll('\\', '/');
     if (relative.split('/').some(secretPart)) throw Object.assign(new Error('Private application files cannot be loaded by reports'), { status: 403 });
     const root = scoped ? scoped.root : this.grants.get(match[1]);
-    let fileRoot = root, filePath = relative;
+    let fileRoot = root, filePath = relative, scope = root;
     if (scoped) {
       const folder = !scoped.prefix || scoped.prefix.endsWith('/');
       if (folder && relative.startsWith(scoped.prefix)) {
         fileRoot = path.resolve(root, scoped.prefix); filePath = relative.slice(scoped.prefix.length);
       } else if (!folder && relative === scoped.prefix) {
         fileRoot = path.dirname(path.resolve(root, scoped.prefix)); filePath = path.basename(scoped.prefix);
-      } else if (root === this.repo && sharedReportFile(relative)) {
-        fileRoot = path.join(root, 'workspace/_shared'); filePath = relative.slice('workspace/_shared/'.length);
+      } else if (scoped.workspace && sharedReportFile(relative)) {
+        // The shared report assets are always the home repository's, also for a project's card.
+        fileRoot = path.join(this.repo, 'workspace/_shared'); filePath = relative.slice('workspace/_shared/'.length);
       } else throw Object.assign(new Error('This file is outside the selected report.'), { status: 403 });
+    } else if (root === this.repo && this.mounts?.enabled) {
+      // A project's card folder is addressed through the home repository, as the merged registry lists it.
+      const mount = await this.mounts.owner(relative);
+      if (mount) fileRoot = scope = mount.root;
     }
     // Resolve links against the allowed folder, not the repository root.
     const { file, info } = await realFile(fileRoot, filePath);
@@ -187,12 +230,12 @@ export class Files {
     const document = /\.(html?|svg)$/i.test(file), html = /\.html?$/i.test(file);
     // HTML runs on its folder's port. SVG stays an opaque document on the shared port, so <img> keeps working in the UI.
     if (html && !siteToken) {
-      const token = scoped ? match[1] : this.scopedGrant(root, relative), site = await this.site(token);
+      const token = scoped ? match[1] : this.scopedGrant(scope, relative, root === this.repo), site = await this.site(token);
       response.writeHead(302, { ...headers, 'Cache-Control': 'no-store', Location: `${site.origin}/view/${token}/${encodePath(relative)}${url.search}` });
       response.end(); return;
     }
     if (document && !scoped) {
-      response.writeHead(302, { ...headers, 'Cache-Control': 'no-store', Location: `/view/${this.scopedGrant(root, relative)}/${encodePath(relative)}${url.search}` });
+      response.writeHead(302, { ...headers, 'Cache-Control': 'no-store', Location: `/view/${this.scopedGrant(scope, relative, root === this.repo)}/${encodePath(relative)}${url.search}` });
       response.end(); return;
     }
     if (scoped) {
@@ -202,7 +245,7 @@ export class Files {
     }
     if (document) {
       const base = `${url.origin}/view/${match[1]}/`, own = base + encodePath(scoped.prefix);
-      const shared = root === this.repo ? ` ${base}workspace/_shared/` : '';
+      const shared = scoped.workspace ? ` ${base}workspace/_shared/` : '';
       const origin = html ? ' allow-same-origin' : '';
       headers['Content-Security-Policy'] = `sandbox allow-scripts${origin} allow-forms allow-popups allow-downloads; default-src 'none'; script-src 'unsafe-inline' ${own}${shared}; style-src 'unsafe-inline' ${own}${shared}; img-src data: blob: ${own}${shared}; media-src blob: ${own}; font-src data: ${own}${shared}; connect-src ${own}; frame-src ${own}; worker-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors ${this.uiOrigin} ${url.origin}`;
       // A port can return in a later session for another folder; start each folder with empty storage.

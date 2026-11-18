@@ -36,10 +36,24 @@ export interface WorkspaceEntity {
   pinned?: boolean
   /** Starter examples remain visible until explicitly archived. */
   sample?: boolean
+  /** Display name of the mounted project this card comes from; absent for home cards. */
+  project?: string
+  /** Id of the mounted project this card comes from; absent for home cards. */
+  mount?: string
+}
+
+/** A project beside the home repository whose cards join this Workspace. */
+export interface WorkspaceMount {
+  id: string
+  name: string
 }
 
 export interface WorkspaceState {
   entities: WorkspaceEntity[]
+  /** Mounted projects; absent when project scanning is off. */
+  mounts?: WorkspaceMount[]
+  /** Plain-English problems met while gathering project cards; absent when scanning is off. */
+  warnings?: string[]
 }
 
 /* ─── 3D comparison steps ─────────────────────────────────────────────────

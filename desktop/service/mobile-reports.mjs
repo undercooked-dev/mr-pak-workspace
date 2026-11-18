@@ -11,15 +11,25 @@ const fail = (message, status = 403) => { throw Object.assign(new Error(message)
 
 export class MobileReports {
   constructor(gateway) { this.gateway = gateway; this.grants = new Map(); }
-  async registry() { return (await readJson(path.join(this.gateway.repo, 'workspace/workspace.json'), { entities: [] })).entities || []; }
+  // Home cards, then those of the projects mounted beside it, with the mount owning each card.
+  async cards() {
+    const home = await readJson(path.join(this.gateway.repo, 'workspace/workspace.json'), { entities: [] });
+    if (!this.gateway.mounts?.enabled) return { entities: home.entities || [], owners: new Map() };
+    const { registry, owners } = await this.gateway.mounts.merge(home);
+    return { entities: registry.entities, owners };
+  }
+  async registry() { return (await this.cards()).entities; }
   async list() {
-    return (await this.registry()).filter(item => item.status !== 'archived' && safePath(item.folder)).map(item => ({ id: item.id, title: item.title, category: item.category, updated: item.updated || item.created, steps: (item.steps || []).map((step, index) => ({ name: step.name, index })) })).filter(item => item.steps.length).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
+    const { entities, owners } = await this.cards();
+    return entities.filter(item => item.status !== 'archived' && safePath(item.folder)).map(item => ({ id: item.id, title: item.title, category: item.category, updated: item.updated || item.created, steps: (item.steps || []).map((step, index) => ({ name: step.name, index })), ...(owners.get(item.id) ? { project: owners.get(item.id).name, mount: owners.get(item.id).id } : {}) })).filter(item => item.steps.length).sort((a, b) => String(b.updated).localeCompare(String(a.updated)));
   }
   async open(device, { entityId, step = 0 }) {
-    const entity = (await this.registry()).find(item => item.id === entityId);
+    const { entities, owners } = await this.cards(), entity = entities.find(item => item.id === entityId);
     if (!entity || !safePath(entity.folder) || !Number.isInteger(step) || !safePath(entity.steps?.[step]?.path)) fail('This report is unavailable on mobile.', 404);
-    const root = await realpath(path.join(this.gateway.repo, 'workspace', entity.folder));
-    if (!within(await realpath(this.gateway.repo), root)) fail('This report folder is outside the Workspace repository.');
+    // A project's card is served from its own workspace; shared report assets stay the home repository's.
+    const base = owners.get(entity.id)?.root || this.gateway.repo;
+    const root = await realpath(path.join(base, 'workspace', entity.folder));
+    if (!within(await realpath(base), root)) fail('This report folder is outside the Workspace repository.');
     const relative = entity.steps[step].path, { file, info } = await realFile(root, relative);
     if (!info.isFile()) fail('Report not found', 404);
     const extension = path.extname(file).toLowerCase();

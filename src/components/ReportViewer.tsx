@@ -5,8 +5,10 @@ import MarkdownDocument, { MarkdownView } from './MarkdownDocument'
 import { ZoomImage } from './ImagePreview'
 import { downloadImage } from '../lib/download'
 import ReportFrame, { REPORT_SANDBOX } from './ReportFrame'
+import type { PageDataCard } from '../lib/page-data'
 
-export default function ReportViewer({ url, title, relativePath }: { url: string; title: string; relativePath: string }) {
+// `card` identifies the card tab shown; an HTML page in it can then save its own data files.
+export default function ReportViewer({ url, title, relativePath, card }: { url: string; title: string; relativePath: string; card?: PageDataCard }) {
   const markdown = /\.md$/i.test(relativePath)
   const image = /\.(png|jpe?g|gif|webp|svg|bmp)$/i.test(relativePath)
   const [file, setFile] = useState<Preview | null>(null)
@@ -38,7 +40,7 @@ export default function ReportViewer({ url, title, relativePath }: { url: string
   if (image) return <div className="report-image"><nav><span>{title}</span><a href={url} target="_blank" rel="noreferrer">Open original</a><a href={url} onClick={event => { event.preventDefault(); void downloadImage(url).catch(error => setError(error.message)) }}>Download</a></nav><ZoomImage src={url} alt={title} /></div>
   const ready = available && loaded
   return <div className="report-document" aria-busy={!ready}>
-    <ReportFrame url={url} title={title} className={`report-frame${ready ? ' loaded' : ''}`} sandbox={isDesktop ? REPORT_SANDBOX : undefined} onLoad={reveal} onError={() => setError('This page could not be loaded.')} />
+    <ReportFrame url={url} title={title} className={`report-frame${ready ? ' loaded' : ''}`} sandbox={isDesktop ? REPORT_SANDBOX : undefined} card={isDesktop && /\.html?$/i.test(relativePath.split(/[?#]/)[0]) ? card : undefined} onLoad={reveal} onError={() => setError('This page could not be loaded.')} />
     {!ready && <div className="report-loading" role="status">Opening report…</div>}
   </div>
 }

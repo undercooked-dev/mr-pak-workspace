@@ -81,6 +81,17 @@ export async function uploadCardImage(entityId: string, step: number, file: File
   if (!response.ok) throw new Error(value.error || 'The image could not be added.')
   return value
 }
+const pageDataCodes: Record<number, string> = { 400: 'invalid', 401: 'read-only', 403: 'read-only', 404: 'not-found', 409: 'conflict', 413: 'too-large' }
+/** Forwards one `mak.data` request of a card page. A failure keeps the code the page receives. */
+export async function pageDataRequest(op: string, request: Record<string, unknown>): Promise<Record<string, unknown>> {
+  let response: Response
+  try {
+    response = await fetch(`/api/page-data/${op}`, { method: 'POST', headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(request), signal: AbortSignal.timeout(60000) })
+  } catch { throw Object.assign(new Error('Mr. Mak did not answer. Nothing was confirmed.'), { code: 'failed' }) }
+  const value = await response.json().catch(() => ({}))
+  if (!response.ok) throw Object.assign(new Error(value.error || `Request failed (${response.status})`), { code: value.code || pageDataCodes[response.status] || 'failed', available: value.available === false ? false : undefined })
+  return value
+}
 export function sendEvent(value: unknown) {
   if (socket?.readyState !== WebSocket.OPEN) return false
   socket.send(JSON.stringify(value)); return true

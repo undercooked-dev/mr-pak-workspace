@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { WorkspaceEntity } from '../types'
+import type { WorkspaceEntity, WorkspaceMount } from '../types'
 import { isDesktop } from '../desktop/client'
 import BrowserSettings from './BrowserSettings'
 import { EntityStatusButton } from './EntityControls'
@@ -12,9 +12,13 @@ interface TopbarProps {
   onStep: (id: string, index: number) => void
   onHome: () => void
   reportUrl: string | null
+  /** Projects a new card can be created in; empty creates it in the home Workspace. */
+  mounts: WorkspaceMount[]
+  /** The card list's project filter (a mount id, or '' for all). */
+  project: string
 }
 
-export default function Topbar({ entity, stepIndex, onStep, onHome, reportUrl }: TopbarProps) {
+export default function Topbar({ entity, stepIndex, onStep, onHome, reportUrl, mounts, project }: TopbarProps) {
   const lastSections = useRef(new Map<string, number>())
   const sectionTabs = useRef<HTMLDivElement>(null)
   const { sections, grouped, groups, activeGroup, groupSections, tabs, activeTab, tabName } = workspaceNavigation(entity, stepIndex)
@@ -56,7 +60,7 @@ export default function Topbar({ entity, stepIndex, onStep, onHome, reportUrl }:
           </>
         )}
         {!isDesktop && <BrowserSettings />}
-        {isDesktop && <NewCard />}
+        {isDesktop && <NewCard mounts={mounts} project={project} />}
       </nav>
 
       {entity && (

@@ -1,10 +1,11 @@
 import type { RefObject } from 'react'
-import type { WorkspaceEntity } from '../types'
+import type { WorkspaceEntity, WorkspaceMount } from '../types'
 import { entityHash } from '../lib/route'
 import { categoryIcon } from '../lib/categories'
 import { contentUrl } from '../desktop/client'
 import MakLogo from './MakLogo'
 import MakText from './MakText'
+import ProjectFilter from './ProjectFilter'
 import { EntityStatusButton } from './EntityControls'
 
 interface SidebarProps {
@@ -17,6 +18,10 @@ interface SidebarProps {
   archivedCount: number
   showArchived: boolean
   onToggleArchived: () => void
+  /** Mounted projects with cards; the filter shows when there are two or more. */
+  projects: WorkspaceMount[]
+  project: string
+  onProject: (id: string) => void
   total: number
   offline: boolean
   lastSync: Date | null
@@ -51,6 +56,9 @@ export default function Sidebar({
   archivedCount,
   showArchived,
   onToggleArchived,
+  projects,
+  project,
+  onProject,
   total,
   offline,
   lastSync,
@@ -99,6 +107,12 @@ export default function Sidebar({
           </button>
         )}
       </div>
+
+      {projects.length > 1 && (
+        <div className="sidebar-project">
+          <ProjectFilter projects={projects} value={project} onChange={onProject} />
+        </div>
+      )}
 
       <nav className="sidebar-list">
         {pinned.length > 0 && (

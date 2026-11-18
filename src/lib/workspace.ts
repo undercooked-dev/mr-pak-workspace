@@ -1,9 +1,55 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { WorkspaceEntity, WorkspaceState } from '../types'
-import { api, isDesktop } from '../desktop/client'
+import type { WorkspaceEntity, WorkspaceMount, WorkspaceState } from '../types'
+import { api, isDesktop, useDesktop } from '../desktop/client'
 
 const POLL_MS = 30_000
 const ARCHIVE_DAYS = 7
+const PROJECT_KEY = 'mrmak.workspaceProject'
+
+/** The mounted projects that have cards in this registry, by name. Home cards belong to none. */
+export function cardProjects(entities: WorkspaceEntity[]): WorkspaceMount[] {
+  const found = new Map<string, string>()
+  for (const e of entities) if (e.mount && !found.has(e.mount)) found.set(e.mount, e.project || e.mount)
+  return [...found]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id))
+}
+
+function readLocalProject(): string {
+  try { return localStorage.getItem(PROJECT_KEY) || '' } catch { return '' }
+}
+
+function saveLocalProject(id: string) {
+  try {
+    if (id) localStorage.setItem(PROJECT_KEY, id)
+    else localStorage.removeItem(PROJECT_KEY)
+  } catch { /* The choice still applies to this window. */ }
+}
+
+/**
+ * The card list's remembered project filter: a mount id, or '' for all projects.
+ * The desktop app keeps it in the service's settings, so it outlives a restart (the UI's
+ * origin, and with it localStorage, changes every launch). localStorage is the fallback for
+ * the browser preview, a failed save, and a service that does not know the setting.
+ */
+export function useProjectFilter(): [string, (id: string) => void] {
+  const { settings } = useDesktop()
+  const saved = isDesktop && typeof settings.workspaceProject === 'string' ? settings.workspaceProject : undefined
+  const [choice, setChoice] = useState(() => saved ?? readLocalProject())
+  // A choice saved by another window arrives with the settings broadcast. The service drops the
+  // setting for "all projects", which that window also cleared from the shared localStorage.
+  const [seen, setSeen] = useState(saved)
+  if (saved !== seen) {
+    setSeen(saved)
+    setChoice(saved ?? readLocalProject())
+  }
+  const choose = useCallback((id: string) => {
+    setChoice(id)
+    saveLocalProject(id)
+    if (isDesktop) api('/settings', { workspaceProject: id }).catch(() => { /* localStorage keeps it. */ })
+  }, [])
+  return [choice, choose]
+}
 
 export type EntityPatch = Partial<Pick<WorkspaceEntity, 'status' | 'category' | 'pinned'>>
 

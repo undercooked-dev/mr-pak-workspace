@@ -188,7 +188,9 @@ button:focus-visible {
   pointer-events: none;
 }
 
-.sidebar-search input {
+/* .sidebar in front outranks the desktop app's generic input rule, whose 12px padding
+   would put the typed text under the glass icon. */
+.sidebar .sidebar-search input {
   width: 100%;
   background: var(--surface-1);
   border: 1px solid var(--hairline);
@@ -222,11 +224,58 @@ button:focus-visible {
 }
 .search-clear:hover { color: var(--text); }
 
-/* Entity list */
+/* Project filter — the search field's look, with a chevron in place of the glass */
+.sidebar-project { margin: 8px 12px 4px; }
+
+.project-filter {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+}
+.project-filter::after {
+  content: '';
+  position: absolute;
+  right: 11px;
+  width: 10px;
+  height: 10px;
+  background: var(--text-dim);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 4.5 6 8l3.5-3.5' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  pointer-events: none;
+}
+.project-filter select {
+  width: 100%;
+  min-width: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--surface-1);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  padding: 7px 28px 7px 11px;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: border-color var(--t-fast) var(--ease), background var(--t-fast) var(--ease),
+    box-shadow var(--t-fast) var(--ease);
+}
+.project-filter select:hover { background: var(--surface-2); }
+.project-filter select:focus {
+  outline: none;
+  border-color: rgba(240, 160, 176, 0.45);
+  background: var(--surface-2);
+  box-shadow: var(--glow-pink);
+}
+.project-filter option { background: var(--surface-solid); color: var(--text); }
+
+/* Entity list — its end scrolls clear of the desktop app's Mr. Mak button */
 .sidebar-list {
   flex: 1;
   overflow-y: auto;
-  padding: 6px 12px 12px;
+  padding: 6px 12px max(12px, var(--dock-clearance, 0px));
 }
 
 .sidebar-section {
@@ -590,6 +639,40 @@ button:focus-visible {
   color: var(--text-muted);
 }
 
+.home-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+}
+.home-tools .project-filter { width: 240px; }
+
+/* Why some project cards are missing — one quiet line, details on demand */
+.home-warnings {
+  margin: 8px 0 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+.home-warnings summary {
+  width: fit-content;
+  max-width: 100%;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: color var(--t-fast) var(--ease);
+}
+.home-warnings summary:hover,
+.home-warnings[open] summary { color: var(--text-dim); }
+.home-warnings summary:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.home-warnings ul {
+  margin: 8px 0 0;
+  padding-left: 20px;
+  max-width: 760px;
+  line-height: 1.6;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
 .home-section { margin-top: 30px; }
 
 .section-head {
@@ -670,8 +753,9 @@ button:focus-visible {
 
 .card-top {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 7px;
+  gap: 6px 7px;
 }
 .card-top .status-dot { margin-left: auto; }
 
@@ -692,6 +776,20 @@ button:focus-visible {
   color: var(--amber);
   border-color: rgba(234, 181, 110, 0.35);
   background: var(--amber-dim);
+}
+/* A project name keeps its own spelling; the chip row wraps, and only a name wider than
+   the whole card is shortened. */
+.chip-project {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0.2px;
+  color: var(--purple);
+  border-color: rgba(183, 148, 244, 0.32);
+  background: var(--purple-dim);
 }
 
 .card-title {

@@ -14,7 +14,10 @@ import { ContextLibrary } from './context.mjs';
 import { groupLabel, taskTitle } from './titles.mjs';
 import { defaultWorkerEffort, taskEffort, workerEfforts } from './effort.mjs';
 import { Workspace, localDay, metadataPatch } from './workspace.mjs';
+import { Mounts, mountRegistry } from './mounts.mjs';
 import { CardDocuments } from './card-documents.mjs';
+import { PageData } from './page-data.mjs';
+import { Prelaunch } from './prelaunch.mjs';
 import { QuickActions } from './quick-actions.mjs';
 import { defaultVoiceStyle, voiceSession } from './voice-profile.mjs';
 import { NativeSettings } from './native-settings.mjs';
@@ -37,11 +40,13 @@ import { isThemePreference } from './appearance.mjs';
 
 const listen = server => new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve(`http://127.0.0.1:${server.address().port}`)); });
 
-export async function createService({ repo, uiDir, stateDir, token = secret(), native = () => {}, restoreSessions = false, mcpOptions, mobileOptions }) {
+export async function createService({ repo, uiDir, stateDir, token = secret(), native = () => {}, restoreSessions = false, mcpOptions, mobileOptions, scanRoots = [] }) {
   repo = await realpath(repo);
   stateDir ||= path.join(repo, '.mrmak');
+  // Projects in the scan roots that keep cards in <project>/mr-mak-workspace join this Workspace.
+  const mounts = new Mounts({ repo, scanRoots });
   const dictation = mobileOptions?.dictation || new MobileDictation(repo);
-  const files = new Files(repo);
+  const files = new Files(repo, mounts);
   const attachments = new Attachments(repo);
   const library = new ContextLibrary(repo);
   const knowledgeSources = await readJson(path.join(stateDir, 'knowledge-sources.json'), []);
@@ -93,9 +98,13 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
   const nativeSettings = new NativeSettings(native, value => broadcast('native-settings', value));
   const show = (window, extra = {}) => { native({ type: 'window', action: 'show', window }); broadcast('navigate', { window, ...extra }); };
   const focus = id => { sessions.get(id); selectedId = id; settings.selectedId = id; scheduleSettings(); show('chats', { sessionId: id }); return { selectedId: id }; };
-  const registry = async () => readJson(path.join(repo, 'workspace', 'workspace.json'), { entities: [] });
-  const workspace = new Workspace(repo, () => broadcast('workspace-changed', {}));
+  const registry = async () => {
+    const home = await readJson(path.join(repo, 'workspace', 'workspace.json'), { entities: [] });
+    return mounts.enabled ? (await mounts.merge(home)).registry : home;
+  };
+  const workspace = new Workspace(repo, () => broadcast('workspace-changed', {}), mounts);
   const cards = new CardDocuments(workspace);
+  const pageData = new PageData({ repo, workspace, files });
   const history = query => sessions.list().filter(item => !query || `${item.name} ${item.agent} ${item.cwd} ${item.preview || ''}`.normalize('NFC').toLowerCase().includes(query.normalize('NFC').toLowerCase())).sort((a, b) => Number(b.pinned) - Number(a.pinned) || String(b.updatedAt).localeCompare(String(a.updatedAt)));
   const closeChat = async id => {
     await sessions.remove(id);
@@ -228,7 +237,8 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
         }
         if (method === 'GET' && url.pathname === '/api/dictation') return json(response, 200, await dictation.status());
         if (method === 'POST' && url.pathname === '/api/transcribe') return json(response, 200, await dictation.transcribe(request, 'desktop', () => !closing));
-        const data = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method) ? await body(request, url.pathname === '/api/files/markdown' ? 12 * 1024 * 1024 : url.pathname.startsWith('/api/workspace/cards') ? 2 * 1024 * 1024 : 256 * 1024) : {};
+        // A page's data request carries up to 2 MB of JSON as escaped text.
+        const data = ['POST', 'PATCH', 'PUT', 'DELETE'].includes(method) ? await body(request, url.pathname === '/api/files/markdown' ? 12 * 1024 * 1024 : url.pathname.startsWith('/api/page-data/') ? 6 * 1024 * 1024 : url.pathname.startsWith('/api/workspace/cards') ? 2 * 1024 * 1024 : 256 * 1024) : {};
         if (method === 'POST' && url.pathname === '/api/dictation') return json(response, 200, await chooseDictation(data.provider));
         if (method === 'GET' && url.pathname === '/api/mobile') return json(response, 200, mobile.status());
         if (method === 'GET' && url.pathname === '/api/mobile/check') return json(response, 200, await mobile.transport.probe());
@@ -246,6 +256,9 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
         const cardDocument = /^\/api\/workspace\/cards\/([^/]+)\/(\d+)$/.exec(url.pathname);
         if (cardDocument && method === 'GET') return json(response, 200, await cards.read(decodeURIComponent(cardDocument[1]), Number(cardDocument[2])));
         if (cardDocument && method === 'PUT') return json(response, 200, await cards.save(decodeURIComponent(cardDocument[1]), Number(cardDocument[2]), data));
+        // A card page's own data files (mak.data), forwarded by the Workspace frame that shows the page.
+        const pageDataRoute = /^\/api\/page-data\/(load|save|history|version)$/.exec(url.pathname);
+        if (method === 'POST' && pageDataRoute) return await pageData.respond(response, pageDataRoute[1], data);
         const cardMetadata = url.pathname.match(/^\/api\/workspace\/entities\/([^/]+)$/);
         if (method === 'PATCH' && cardMetadata) return json(response, 200, await workspace.update(decodeURIComponent(cardMetadata[1]), metadataPatch(data)));
         if (method === 'GET' && url.pathname === '/api/projects') {
@@ -280,7 +293,8 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
           // A link in a chat may be relative to that chat's working folder.
           const base = typeof data.sessionId === 'string' ? sessions.get(data.sessionId).cwd : repo;
           if (typeof data.path !== 'string' || !data.path.trim() || /[\x00-\x1f]/.test(data.path)) throw new Error('Choose a local file or folder.');
-          const target = await realpath(path.resolve(base, data.path));
+          // A project's card is addressed through the home repository, as the merged registry lists it.
+          const { actual: target } = await files.real(path.resolve(base, data.path));
           if ((await stat(target)).isDirectory()) { native({ type: 'reveal', path: target }); return json(response, 200, { shown: 'folder', path: target }); }
           const preview = await files.preview(target); show('workspace', { preview });
           return json(response, 200, { shown: 'preview', path: preview.path });
@@ -324,6 +338,10 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
           if (['full', 'compact', 'hidden'].includes(data.systemEvents)) settings.systemEvents = data.systemEvents;
           if (isThemePreference(data.workspaceTheme)) settings.workspaceTheme = data.workspaceTheme;
           if (isThemePreference(data.chatTheme)) settings.chatTheme = data.chatTheme;
+          // The project the Workspace card list is filtered to; an empty string clears it.
+          if (typeof data.workspaceProject === 'string' && data.workspaceProject.length <= 200) {
+            if (data.workspaceProject) settings.workspaceProject = data.workspaceProject; else delete settings.workspaceProject;
+          }
           if (['medium', 'high'].includes(data.coordinatorEffort)) settings.coordinatorEffort = data.coordinatorEffort;
           if (['cedar', 'marin'].includes(data.voiceName)) settings.voiceName = data.voiceName;
           if (data.groupColors && typeof data.groupColors === 'object' && !Array.isArray(data.groupColors)) settings.groupColors = Object.fromEntries(Object.entries(data.groupColors).filter(([name, value]) => name.length <= 60 && typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value)).slice(0, 200).map(([name, value]) => [name, value.toLowerCase()]));
@@ -405,7 +423,8 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
           native({ type: 'window', action: data.action, window: data.window, value: !!data.value }); return json(response, 200, { requested: true });
         }
         if (method === 'POST' && url.pathname === '/api/reveal') {
-          const file = await realpath(path.resolve(data.path));
+          // A project's card is addressed through the home repository; reveal the file where it really is.
+          const { actual: file } = await files.real(path.resolve(data.path));
           native({ type: 'reveal', path: file }); return json(response, 200, { requested: true });
         }
         if (method === 'POST' && url.pathname === '/api/coordinator') return json(response, 200, await askMak(data));
@@ -455,7 +474,7 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
   });
   const origin = await listen(server);
   files.uiOrigin = origin;
-  mobile = await new MobileGateway({ ...mobileOptions, transcripts, readAloud, dictation, chooseDictation, repo, uiDir, stateDir, sessions, attachments, closeChat, settings: () => settings, changed: state => broadcast('mobile-state', { mobile: state }) }).init();
+  mobile = await new MobileGateway({ ...mobileOptions, transcripts, readAloud, dictation, chooseDictation, repo, uiDir, stateDir, sessions, attachments, closeChat, mounts, settings: () => settings, changed: state => broadcast('mobile-state', { mobile: state }) }).init();
   const wss = new WebSocketServer({ noServer: true, maxPayload: 128 * 1024 });
   server.on('upgrade', (request, socket, head) => {
     const url = new URL(request.url, origin);
@@ -488,16 +507,33 @@ export async function createService({ repo, uiDir, stateDir, token = secret(), n
     ws.on('close', () => { clearTimeout(authTimer); clients.delete(ws); if (voiceOwner?.clientId === ws.clientId) { voiceOwner = null; broadcast('voice-owner', { owner: null }); } });
     ws.on('error', () => {});
   });
-  let watcher;
-  try { watcher = watch(path.join(repo, 'workspace', 'workspace.json'), () => broadcast('workspace-changed', {})); watcher.on('error', () => {}); } catch { /* Registry may be created after first setup. */ }
+  // The home registry and each mounted project's; re-armed when projects appear or disappear.
+  // Each registry's folder is watched for that file name: a save replaces the file (a temporary
+  // file renamed over it), which ends a watch on the file itself after the first save.
+  const watchers = [];
+  let registryTimer = null;
+  const registryChanged = () => { registryTimer ||= setTimeout(() => { registryTimer = null; broadcast('workspace-changed', {}); }, 50); };
+  const watchRegistries = registries => {
+    for (const watcher of watchers.splice(0)) watcher.close();
+    for (const file of registries) {
+      const name = path.basename(file);
+      try { const watcher = watch(path.dirname(file), (event, changed) => { if (!changed || changed === name) registryChanged(); }); watcher.on('error', () => {}); watchers.push(watcher); } catch { /* Registry may be created after first setup. */ }
+    }
+  };
+  watchRegistries([path.join(repo, 'workspace', 'workspace.json')]);
+  mounts.changed = list => { if (closing) return; watchRegistries([path.join(repo, 'workspace', 'workspace.json'), ...list.map(mountRegistry)]); broadcast('workspace-changed', {}); };
+  if (mounts.enabled) mounts.list().catch(() => {});
+  // Trusted projects rebuild their derived pages once, after the service is up; a failing or hanging script never blocks it.
+  const prelaunch = new Prelaunch({ stateDir, mounts, finished: () => broadcast('workspace-changed', {}) });
+  const prelaunchTimer = setTimeout(() => prelaunch.start(), 0);
   const restoreTimer = restoreSessions ? setTimeout(() => sessions.restore().catch(error => sessions.emit('service-error', error)), 100) : null;
   return {
-    origin, contentOrigin: files.origin, token, sessions, coordinator, quick, workspace, cards, files, projects, knowledge, integrations, mobile,
+    origin, contentOrigin: files.origin, token, sessions, coordinator, quick, workspace, cards, files, projects, knowledge, integrations, mobile, mounts,
     urls: { workspace: `${origin}/?desktop=1&surface=workspace&token=${token}`, chats: `${origin}/?desktop=1&surface=chats&token=${token}` },
       nativeMessage: event => nativeSettings.receive(event),
       async close() {
-        if (closing) return; closing = true; mcp.close(); nativeSettings.close(); await files.writes.catch(() => {});
-      watcher?.close(); clearTimeout(restoreTimer); coordinator.close(); clearTimeout(settingsTimer); await saveSettings(); await transcriptSave; await quick.saves; await workspace.writes;
+        if (closing) return; closing = true; mcp.close(); nativeSettings.close(); await files.writes.catch(() => {}); await pageData.writes;
+      mounts.changed = null; watchRegistries([]); clearTimeout(registryTimer); clearTimeout(prelaunchTimer); await prelaunch.close(); clearTimeout(restoreTimer); coordinator.close(); clearTimeout(settingsTimer); await saveSettings(); await transcriptSave; await quick.saves; await workspace.writes;
       dictation.close(); await mobile.close();
       for (const ws of wss.clients) ws.terminate();
       wss.close(); await sessions.close();
