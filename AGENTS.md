@@ -29,6 +29,19 @@ working. Ask for missing personal preferences; do not invent a biography.
   apply an update. Prepare and verify changes, then obtain restart permission.
 - Before committing or publishing, review the selected files for personal data,
   credentials, unintended media and unrelated changes.
+- The app holds only what every project uses unchanged: its windows, chats, the
+  card list and navigation, viewers for generic formats, shared report assets,
+  skills, and generic capabilities such as page data. Anything specific to one
+  project (a tool, an editor, a board, anything in that project's vocabulary) is
+  a page in that project's workspace, built on those capabilities; see "Project
+  tools are pages" in `processes/workspace-authoring.md`. The test: would another
+  project use it unchanged? If not, it does not go in the app. When a project
+  page needs something the app cannot do, add a generic capability here, never a
+  project feature.
+- This repository is tooling, not a production app. Do not add, extend or
+  maintain unit or integration tests for it; check a change by building and
+  running it once. It has no automated test suite; `desktop/service/test/browser.mjs`
+  is only a browser launcher for looking at the UI headlessly.
 
 ## First setup
 

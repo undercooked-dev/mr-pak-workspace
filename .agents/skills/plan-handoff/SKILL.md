@@ -23,7 +23,7 @@ When you delegate, the brief is all the planner knows. Give it the goal in one s
 4. **Open questions**: only those whose answer changes the plan, each with the assumption used if no answer arrives.
 5. **Out of scope**.
 
-The acceptance check is an observation in the form the repository accepts. Read the repository's `AGENTS.md` for that: one project requires native evidence and tests, another forbids automated tests and relies on the owner inspecting the result.
+The acceptance check is an observation in the form the repository accepts. Read the repository's `AGENTS.md` for that: one project requires native evidence and tests, another forbids automated tests and relies on the owner inspecting the result. The default is no automated tests: plan them only for a repository whose instructions say it is a production app that requires them. Everywhere else the check is running the change once.
 
 ## Executor tier
 

@@ -16,6 +16,10 @@ Keep authored content in English unless the user explicitly requests another
 language. Put related iterations in an existing card rather than creating
 several cards for one task. Do not reorganize unrelated projects.
 
+A project's hub card follows the three-level layout in that workflow: folders
+across the top, sections as tabs, and a sidebar for the items inside a section.
+Arrange a new project that way and fit new pages into the existing levels.
+
 For a gallery or research page that the owner wants to edit directly, use the
 versioned `.card.json` format in [editable cards](../../../docs/editable-cards.md).
 Register its step with `viewer: "card"`. Keep stable entry IDs, relative local
@@ -24,6 +28,9 @@ saving. Reread the source before each edit and update the registry date. The app
 provides the view, so do not create a second editable HTML copy of the same data.
 Preserve existing custom HTML unless conversion was requested. Browser and phone
 previews can read these cards; the desktop Workspace provides editing controls.
+
+A tool that only one project needs is an HTML page in that project's card that
+saves its data through `mak.data` (see [Project tools are pages](../../../processes/workspace-authoring.md#project-tools-are-pages) and `docs/page-data.md`), never a change to the app.
 
 Use `workspace/_shared/report.css` and `report.js` in every HTML report, with
 `data-mak-report="document"` on the root element. Use the shared tokens and

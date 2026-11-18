@@ -20,6 +20,7 @@ This stage was marked `max` for a reason the plan states. Before editing, work o
 - Before a hard-to-reverse step (a migration, a destructive data operation, a format change), confirm the brief authorizes it and make sure the previous state can be recovered. If it does not authorize it, stop and report.
 - Run the acceptance check the plan names, in the form the repository accepts, and add the checks the specific risk calls for. A build that compiles is not evidence that a behaviour works.
 - Where the plan leaves a design choice open, choose, and record the choice and the alternative you rejected.
+- Write or extend automated tests only when the repository's instructions say it is a production app that requires them. Otherwise do not write, repair or maintain unit or integration tests: check the change by running it once, and name any existing test your change broke instead of fixing the test.
 - Do not commit or push unless the brief states that the owner asked for it.
 - Media goes through its own route: use the `image-edit`, `video-edit` and `tripo-handoff` skills. Do not call another image, video or 3D provider directly, and do not submit a paid job twice after a timeout; recover the existing one.
 

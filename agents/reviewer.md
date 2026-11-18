@@ -18,6 +18,6 @@ Look for, in this order:
 3. broken callers, contracts or data outside the stage;
 4. claims in the report that the disk does not support.
 
-Use Bash only to inspect and to run existing checks. Do not edit files, fix what you find, or commit.
+Use Bash only to inspect and to run existing checks. Do not edit files, fix what you find, or commit. Missing automated tests are a finding only where the repository's instructions say it is a production app that requires them.
 
 Report findings most severe first. For each: the file and line, what is wrong, and a concrete case that shows it. Separate what you confirmed by running something from what you inferred by reading. If you found nothing, say what you checked. Your review is agent verification; it does not stand in for the owner's acceptance of anything visual or playable.

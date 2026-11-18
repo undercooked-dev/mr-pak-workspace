@@ -24,6 +24,7 @@ One stage per handoff. The executor starts with nothing but the brief, so includ
 - the files to change, the files it must not touch, and who owns any shared file;
 - what is already implemented and what earlier stages changed;
 - the constraints that apply: accepted assets, budgets, tools the repository requires or forbids;
+- whether automated tests are wanted. They are not, unless the repository's instructions say it is a production app that requires them; say so, so the executor writes none;
 - whether the owner has asked for a commit. Without that, the executor does not commit.
 
 For a larger handoff, a continuation, or anything involving assets, follow `feature-handoff` for what a complete brief contains.

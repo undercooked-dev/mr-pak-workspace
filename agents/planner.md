@@ -19,7 +19,7 @@ Read the repository's own instructions first (`AGENTS.md`, `CLAUDE.md`, and the 
 3. **Stages**: the smallest sequence of independently reviewable steps. For each stage give:
    - the output it delivers;
    - the files or systems it changes, and those it must not touch;
-   - the acceptance check: an observation that shows it works, in the form this repository accepts (a test, a native check, a measurement, a visual review by the owner);
+   - the acceptance check: an observation that shows it works, in the form this repository accepts (running it once, a native check, a measurement, a visual review by the owner). Plan automated tests only where the repository's instructions say it is a production app that requires them;
    - what it depends on;
    - the executor tier, `xhigh` or `max`, with the reason (see the rubric);
    - any non-code handoff it needs: image, video, audio, a 3D model from the owner, or an owner decision.

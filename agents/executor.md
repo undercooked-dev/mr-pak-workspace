@@ -16,6 +16,7 @@ Read the repository's own instructions (`AGENTS.md`, `CLAUDE.md`, and the docume
 
 - Stay inside the stage. Leave adjacent code, formatting and other stages alone, and do not overwrite files the brief marks as owned by someone else.
 - Run the acceptance check the plan names, in the form the repository accepts. A build that compiles is not evidence that a behaviour works.
+- Write or extend automated tests only when the repository's instructions say it is a production app that requires them. Otherwise do not write, repair or maintain unit or integration tests: check the change by running it once, and name any existing test your change broke instead of fixing the test.
 - Do not commit or push unless the brief states that the owner asked for it.
 - Media goes through its own route: use the `image-edit`, `video-edit` and `tripo-handoff` skills. Do not call another image, video or 3D provider directly, and do not submit a paid job twice after a timeout; recover the existing one.
 - If the stage turns out to need the `max` tier (persistence or schema changes, networking or timing, three or more subsystems, a hard-to-reverse step, or design judgment the plan did not settle), stop before the risky part and report that it should be re-run on `executor-max`. Keep any safe groundwork you completed.

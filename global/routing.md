@@ -15,4 +15,5 @@ These routes apply in every repository. A repository's own `AGENTS.md` or `CLAUD
 
 - Plan before implementing anything that takes more than one step, and hand execution to the tier the plan names.
 - Paid media jobs: check the cost first, save the job receipt before waiting, and recover a job after a timeout instead of submitting it again.
+- Automated tests are for production apps only. Do not write, extend or maintain unit or integration tests for dev workspaces, tooling, prototypes or idea work; check a change by running it once. A repository counts as a production app only when its own `AGENTS.md` or `CLAUDE.md` says tests are required.
 - Do not commit or push without an explicit request.
